@@ -417,26 +417,50 @@ export function LandingPage() {
           {...sectionMotion}
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(90deg,rgba(15,42,61,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(15,42,61,0.06)_1px,transparent_1px)] bg-[size:48px_48px]" />
-          <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-8 lg:py-24">
-            <div className="max-w-4xl">
+          <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+            <div className="mx-auto max-w-5xl text-center">
               <p className="mb-5 inline-flex rounded-md border border-[#cce8e7] bg-white/85 px-4 py-2 text-sm font-extrabold text-[#0F2A3D] shadow-sm">
                 Castrop-Rauxel · Dortmund · Herne · Bochum
               </p>
-              <h1 className="max-w-5xl text-4xl font-black leading-[1.06] tracking-tight text-[#0F2A3D] sm:text-5xl lg:text-6xl">
+              <h1 className="mx-auto max-w-5xl text-4xl font-black leading-[1.06] tracking-tight text-[#0F2A3D] sm:text-5xl lg:text-6xl">
                 Haus, Garten & Objektservice rund um Castrop-Rauxel
               </h1>
-              <p className="mt-6 max-w-3xl text-lg leading-8 text-[#425466] sm:text-xl">
+              <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-[#425466] sm:text-xl">
                 Klickhafen Lokalservice übernimmt Gartenpflege, Reinigung, Montage,
                 Bodenverlegung, Entrümpelung und regelmäßige Objektpflege in Castrop-Rauxel,
                 Dortmund, Herne und Bochum.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <motion.a
                   href="#anfrage"
-                  className="rounded-md bg-[#0F2A3D] px-7 py-4 text-center text-base font-extrabold text-white shadow-[0_18px_40px_rgba(15,42,61,0.22)] transition hover:bg-[#14354d]"
-                  {...buttonMotion}
+                  className="relative overflow-hidden rounded-md bg-[#0F2A3D] px-7 py-4 text-center text-base font-extrabold text-white shadow-[0_18px_40px_rgba(15,42,61,0.22)] transition hover:bg-[#14354d]"
+                  {...(reduceMotion
+                    ? buttonMotion
+                    : {
+                        ...buttonMotion,
+                        animate: {
+                          boxShadow: [
+                            "0 18px 40px rgba(15,42,61,0.22)",
+                            "0 18px 42px rgba(24,199,184,0.42)",
+                            "0 18px 40px rgba(15,42,61,0.22)",
+                          ],
+                        },
+                        transition: {
+                          duration: 2.4,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        },
+                      })}
                 >
-                  Kostenlose Anfrage stellen
+                  {!reduceMotion ? (
+                    <motion.span
+                      aria-hidden
+                      className="absolute inset-y-0 -left-10 w-10 skew-x-[-18deg] bg-white/20"
+                      animate={{ x: [0, 260] }}
+                      transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  ) : null}
+                  <span className="relative">Kostenlose Anfrage stellen</span>
                 </motion.a>
                 <motion.a
                   href="#kostenrechner"
@@ -461,49 +485,6 @@ export function LandingPage() {
                     {badge}
                   </div>
                 ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute -left-6 top-8 hidden h-[78%] w-4 bg-[#18C7B8]/25 lg:block" />
-              <div className="rounded-lg border border-[#d2e4eb] bg-white p-5 shadow-[0_28px_70px_rgba(15,42,61,0.18)]">
-                <div className="rounded-lg bg-[#0F2A3D] p-5 text-white">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-bold text-[#bfe8e6]">Neue Anfrage</p>
-                    <span className="rounded-md bg-[#18C7B8] px-3 py-1 text-xs font-black text-[#0F2A3D]">
-                      wird geprüft
-                    </span>
-                  </div>
-                  <p className="mt-5 text-3xl font-black tracking-tight">Gartenpflege</p>
-                  <p className="mt-2 text-sm leading-6 text-[#d8e8ed]">
-                    Bilder, Preisrahmen und Terminwunsch liegen vor.
-                  </p>
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {[
-                    ["3 Bilder hochgeladen", "Fotos vom Garten und Zugang"],
-                    ["Preisschätzung: ab 89 €", "Unverbindliche erste Orientierung"],
-                    ["Status: Angebot wird vorbereitet", "Rückmeldung nach Prüfung"],
-                  ].map(([title, text]) => (
-                    <div
-                      key={title}
-                      className="rounded-md border border-[#e1edf1] bg-[#F4F8FA] p-4"
-                    >
-                      <p className="font-extrabold text-[#0F2A3D]">{title}</p>
-                      <p className="mt-1 text-sm text-[#64748B]">{text}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                  {["transparent", "lokal", "flexibel"].map((item) => (
-                    <p
-                      key={item}
-                      className="rounded-md bg-white px-3 py-3 text-sm font-extrabold text-[#0F2A3D] ring-1 ring-[#dbe7ec]"
-                    >
-                      {item}
-                    </p>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
@@ -1014,7 +995,12 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 md:grid-cols-[1.35fr_1fr_1fr]">
             <motion.div {...(reduceMotion ? {} : { whileHover: { y: -2 } })}>
-              <p className="text-xl font-black">Klickhafen Lokalservice</p>
+              <img
+                src="/klickhafen_logo_transparent.png"
+                alt="Klickhafen"
+                className="h-12 w-auto max-w-[220px] object-contain brightness-0 invert"
+              />
+              <p className="mt-4 text-xl font-black">Klickhafen Lokalservice</p>
               <p className="mt-3 max-w-sm text-sm leading-6 text-[#d5e6ec]">
                 Haus, Garten & Objektservice rund um Castrop-Rauxel.
               </p>
