@@ -1,4 +1,4 @@
-const fallbackSiteUrl = "https://klickhafen-lokalservice.de";
+const fallbackSiteUrl = "https://klickhafen.net";
 
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || fallbackSiteUrl).replace(/\/$/, "");
 

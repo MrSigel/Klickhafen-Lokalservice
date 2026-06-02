@@ -108,7 +108,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   const phone = process.env.NEXT_PUBLIC_PHONE_NUMBER ?? "";
   const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "kontakt@klickhafen.de";
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://klickhafen.de";
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://klickhafen.net";
   page.drawText("Klickhafen Lokalservice", { x: 355, y, size: 12, font: bold, color: navy });
   page.drawText("Haus, Garten & Objektservice", { x: 355, y: y - 16, size: 9, font: regular, color: muted });
   page.drawText(`E-Mail: ${email}`, { x: 355, y: y - 31, size: 8.5, font: regular, color: muted });
@@ -209,7 +209,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   page.drawText("Ort, Datum, Unterschrift", { x: 335, y: y - 48, size: 7.5, font: regular, color: muted });
 
   page.drawLine({ start: { x: margin, y: 34 }, end: { x: width - margin, y: 34 }, thickness: 0.5, color: muted });
-  page.drawText("© Klickhafen.de Webdesign und Entwicklung", { x: margin, y: 22, size: 7.5, font: regular, color: muted });
+  page.drawText("© Klickhafen Lokalservice · Ein Bereich von Klickhafen", { x: margin, y: 22, size: 7.5, font: regular, color: muted });
   page.drawText(`Klickhafen Lokalservice · Castrop-Rauxel und Umgebung · E-Mail: ${email} · Telefon: ${phone || "-"}`, {
     x: margin,
     y: 11,
@@ -304,7 +304,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       color: muted,
     });
     consentPage.drawLine({ start: { x: margin, y: 34 }, end: { x: width - margin, y: 34 }, thickness: 0.5, color: muted });
-    consentPage.drawText("© Klickhafen.de Webdesign und Entwicklung", {
+    consentPage.drawText("© Klickhafen Lokalservice · Ein Bereich von Klickhafen", {
       x: margin,
       y: 20,
       size: 7.5,

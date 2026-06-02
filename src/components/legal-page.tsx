@@ -100,6 +100,9 @@ export function LegalPage({ title, intro, children }: LegalPageProps) {
                 <Link className="transition hover:text-[#18C7B8]" href="/agb">
                   AGB
                 </Link>
+                <Link className="transition hover:text-[#18C7B8]" href="/widerruf">
+                  Widerruf
+                </Link>
                 <Link className="transition hover:text-[#18C7B8]" href="/#anfrage">
                   Kontakt
                 </Link>
@@ -108,12 +111,13 @@ export function LegalPage({ title, intro, children }: LegalPageProps) {
           </div>
           <div className="mt-8 border-t border-white/12 pt-5 text-center">
             <a
-              href="https://klickhafen.de"
+              href="https://klickhafen.net"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-[#d5e6ec] transition hover:bg-white/10 hover:text-[#18C7B8]"
+              className="inline-grid rounded-md px-3 py-2 text-sm font-semibold text-[#d5e6ec] transition hover:bg-white/10 hover:text-[#18C7B8]"
             >
-              © klickhafen.de Webdesign und Entwicklung
+              <span>© Klickhafen Lokalservice</span>
+              <span className="text-xs font-medium text-[#9fb9c4]">Ein Bereich von Klickhafen</span>
             </a>
           </div>
         </div>

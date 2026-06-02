@@ -265,15 +265,23 @@ const faqItems = [
   },
 ];
 
-const brandLogos = [
-  { name: "Makita", src: "/brands/makita.svg" },
-  { name: "Parkside" },
-  { name: "STIHL", src: "/brands/stihl.svg" },
-  { name: "Bosch", src: "/brands/bosch.svg" },
-  { name: "Kärcher", src: "/brands/kaercher.svg" },
-  { name: "Einhell", src: "/brands/einhell.png" },
-  { name: "DeWalt", src: "/brands/dewalt.jpg" },
-  { name: "Lidl", src: "/brands/lidl.svg" },
+const equipmentCards = [
+  {
+    title: "Garten & Außenbereich",
+    text: "Passende Ausstattung für Pflege, Schnittarbeiten und Außenflächen.",
+  },
+  {
+    title: "Reinigung",
+    text: "Gepflegte Arbeitsmittel für Fenster, Treppenhaus und Objektpflege.",
+  },
+  {
+    title: "Montage",
+    text: "Solides Werkzeug für Aufbau, Befestigung und kleinere Innenarbeiten.",
+  },
+  {
+    title: "Transport & Räumung",
+    text: "Praktische Ausrüstung für Entrümpelung, Abtransport und Vorbereitung.",
+  },
 ];
 
 type ServiceKey = keyof typeof services;
@@ -1406,6 +1414,7 @@ export function LandingPage() {
                 </motion.a>
                 <div className="mt-6 grid gap-3 text-sm text-[#d5e6ec]">
                   <p>E-Mail: kontakt@klickhafen.de</p>
+                  <p>Klickhafen Lokalservice ist ein Bereich von Klickhafen.</p>
                   <p>
                     Einsatzgebiet: Castrop-Rauxel, Dortmund, Herne, Bochum und Umgebung rund um
                     44577 Castrop-Rauxel.
@@ -1590,32 +1599,27 @@ export function LandingPage() {
                 Werkzeug & Ausstattung
               </p>
               <h2 className="mt-2 text-2xl font-black text-[#0F2A3D]">
-                Marken, mit denen wir arbeiten
+                Werkzeug & Ausstattung
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-[#64748B]">
-              Vertraute Hersteller aus Gartenpflege, Reinigung, Montage und Objektservice.
+              Wir arbeiten mit zuverlässigem, gepflegtem Werkzeug und passender Ausstattung für
+              Haus, Garten, Reinigung, Montage und Objektservice.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-            {brandLogos.map((brand) => (
+            {equipmentCards.map((item) => (
               <motion.div
-                key={brand.name}
-                className="group grid min-h-24 place-items-center rounded-lg border border-[#dbe7ec] bg-white p-5 shadow-sm transition hover:border-[#18C7B8] hover:shadow-[0_16px_34px_rgba(15,42,61,0.1)]"
+                key={item.title}
+                className="group rounded-lg border border-[#dbe7ec] bg-white p-5 shadow-sm transition hover:border-[#18C7B8] hover:shadow-[0_16px_34px_rgba(15,42,61,0.1)]"
                 {...(reduceMotion ? {} : { whileHover: { y: -3 }, whileTap: { scale: 0.98 } })}
               >
-                {brand.src ? (
-                  <img
-                    src={brand.src}
-                    alt={brand.name}
-                    className="max-h-10 max-w-[150px] object-contain opacity-70 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
-                  />
-                ) : (
-                  <span className="rounded-md bg-[#0F2A3D] px-4 py-2 text-lg font-black tracking-wide text-white opacity-70 grayscale transition duration-300 group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D] group-hover:opacity-100 group-hover:grayscale-0">
-                    {brand.name}
-                  </span>
-                )}
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[#0F2A3D] text-lg font-black text-[#18C7B8]">
+                  ✓
+                </span>
+                <h3 className="mt-4 text-lg font-black text-[#0F2A3D]">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#64748B]">{item.text}</p>
               </motion.div>
             ))}
           </div>
@@ -1678,6 +1682,7 @@ export function LandingPage() {
                   ["Impressum", "/impressum"],
                   ["Datenschutz", "/datenschutz"],
                   ["AGB", "/agb"],
+                  ["Widerruf", "/widerruf"],
                   ["Kontakt", "#anfrage"],
                 ].map(([label, href]) => (
                   <motion.a
@@ -1695,13 +1700,14 @@ export function LandingPage() {
 
           <div className="mt-8 border-t border-white/12 pt-5 text-center">
             <motion.a
-              href="https://klickhafen.de"
+              href="https://klickhafen.net"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-[#d5e6ec] transition hover:bg-white/10 hover:text-[#18C7B8]"
+              className="inline-grid rounded-md px-3 py-2 text-sm font-semibold text-[#d5e6ec] transition hover:bg-white/10 hover:text-[#18C7B8]"
               {...(reduceMotion ? {} : { whileHover: { y: -2, scale: 1.02 }, whileTap: { scale: 0.98 } })}
             >
-              © klickhafen.de Webdesign und Entwicklung
+              <span>© Klickhafen Lokalservice</span>
+              <span className="text-xs font-medium text-[#9fb9c4]">Ein Bereich von Klickhafen</span>
             </motion.a>
           </div>
         </div>
