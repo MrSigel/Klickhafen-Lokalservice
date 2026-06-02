@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { CookieNotice } from "@/components/cookie-notice";
 import { StructuredData } from "@/components/structured-data";
 import { WhatsAppWidget } from "@/components/whatsapp-widget";
@@ -93,6 +94,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <StructuredData />
         {children}
+        <Analytics />
         <WhatsAppWidget />
         <CookieNotice />
       </body>
