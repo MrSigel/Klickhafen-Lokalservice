@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const services = {
   Gartenarbeiten: [
@@ -203,6 +204,27 @@ export function LandingPage() {
   const [error, setError] = useState("");
   const [fileError, setFileError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+  const reduceMotion = useReducedMotion();
+  const buttonMotion = reduceMotion
+    ? {}
+    : {
+        whileHover: { scale: 1.03 },
+        whileTap: { scale: 0.97 },
+      };
+  const cardMotion = reduceMotion
+    ? {}
+    : {
+        whileHover: { y: -4 },
+        transition: { duration: 0.18 },
+      };
+  const sectionMotion = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 18 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.16 },
+        transition: { duration: 0.45 },
+      };
 
   const estimate = useMemo(() => {
     const selected = effort[selectedEffort];
@@ -352,13 +374,18 @@ export function LandingPage() {
     <div className="min-h-screen bg-[#F4F8FA] text-[#10212E]">
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/90 shadow-sm backdrop-blur-xl">
         <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <a href="#start" aria-label="Klickhafen Lokalservice" className="group flex min-w-0 items-center">
+          <motion.a
+            href="#start"
+            aria-label="Klickhafen Lokalservice"
+            className="group flex min-w-0 items-center"
+            {...(reduceMotion ? {} : { whileHover: { scale: 1.02 }, whileTap: { scale: 0.98 } })}
+          >
             <img
               src="/klickhafen_logo_transparent.png"
               alt="Klickhafen"
               className="h-11 w-auto max-w-[168px] object-contain transition duration-200 group-hover:scale-[1.04] group-hover:drop-shadow-[0_8px_16px_rgba(15,42,61,0.18)] sm:h-12 sm:max-w-[220px]"
             />
-          </a>
+          </motion.a>
           <div className="hidden items-center gap-7 text-sm font-bold text-[#0F2A3D] md:flex">
             <a className="transition hover:text-[#18C7B8]" href="#leistungen">
               Leistungen
@@ -373,18 +400,22 @@ export function LandingPage() {
               Anfrage
             </a>
           </div>
-          <a
+          <motion.a
             href="#anfrage"
             className="shrink-0 rounded-md bg-[#18C7B8] px-5 py-3 text-sm font-extrabold text-[#0F2A3D] shadow-[0_10px_24px_rgba(24,199,184,0.28)] transition hover:bg-[#15b6a8]"
+            {...buttonMotion}
           >
             <span className="sm:hidden">Anfrage</span>
             <span className="hidden sm:inline">Kostenlose Anfrage</span>
-          </a>
+          </motion.a>
         </nav>
       </header>
 
       <main id="start">
-        <section className="relative overflow-hidden border-b border-[#dbe7ec] bg-[linear-gradient(135deg,#F4F8FA_0%,#FFFFFF_48%,#E9F7F6_100%)]">
+        <motion.section
+          className="relative overflow-hidden border-b border-[#dbe7ec] bg-[linear-gradient(135deg,#F4F8FA_0%,#FFFFFF_48%,#E9F7F6_100%)]"
+          {...sectionMotion}
+        >
           <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(90deg,rgba(15,42,61,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(15,42,61,0.06)_1px,transparent_1px)] bg-[size:48px_48px]" />
           <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-8 lg:py-24">
             <div className="max-w-4xl">
@@ -400,18 +431,20 @@ export function LandingPage() {
                 Dortmund, Herne und Bochum.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
+                <motion.a
                   href="#anfrage"
                   className="rounded-md bg-[#0F2A3D] px-7 py-4 text-center text-base font-extrabold text-white shadow-[0_18px_40px_rgba(15,42,61,0.22)] transition hover:bg-[#14354d]"
+                  {...buttonMotion}
                 >
                   Kostenlose Anfrage stellen
-                </a>
-                <a
+                </motion.a>
+                <motion.a
                   href="#kostenrechner"
                   className="rounded-md border border-[#b8d5df] bg-white px-7 py-4 text-center text-base font-extrabold text-[#0F2A3D] shadow-sm transition hover:border-[#18C7B8] hover:bg-[#f7fffd]"
+                  {...buttonMotion}
                 >
                   Preis berechnen
-                </a>
+                </motion.a>
               </div>
               <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
@@ -474,9 +507,9 @@ export function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section id="leistungen" className="bg-white py-18 sm:py-20">
+        <motion.section id="leistungen" className="bg-white py-18 sm:py-20" {...sectionMotion}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionIntro
               eyebrow="Leistungen"
@@ -485,14 +518,18 @@ export function LandingPage() {
             />
             <div className="mt-10 grid gap-5 md:grid-cols-2">
               {serviceCards.map((card) => (
-                <article
+                <motion.article
                   key={card.title}
                   className="group rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#18C7B8] hover:bg-white hover:shadow-[0_18px_42px_rgba(15,42,61,0.12)]"
+                  {...cardMotion}
                 >
                   <div className="flex items-start gap-4">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0F2A3D] text-[#18C7B8] transition group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D]">
+                    <motion.span
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0F2A3D] text-[#18C7B8] transition group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D]"
+                      {...(reduceMotion ? {} : { whileHover: { rotate: -3, scale: 1.06 } })}
+                    >
                       <ServiceIcon name={card.icon} />
-                    </span>
+                    </motion.span>
                     <div>
                       <h3 className="text-2xl font-black tracking-tight text-[#0F2A3D]">
                         {card.title}
@@ -508,13 +545,13 @@ export function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                </article>
+                </motion.article>
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section id="ablauf" className="py-18 sm:py-20">
+        <motion.section id="ablauf" className="py-18 sm:py-20" {...sectionMotion}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionIntro
               eyebrow="Ablauf"
@@ -525,23 +562,28 @@ export function LandingPage() {
               <div className="absolute left-5 top-0 hidden h-full w-px bg-[#cde0e7] sm:block lg:left-0 lg:top-10 lg:h-px lg:w-full" />
               <div className="relative grid gap-4 lg:grid-cols-6">
                 {timelineSteps.map((step, index) => (
-                  <div
+                  <motion.div
                     key={step.title}
                     className="relative rounded-lg border border-[#dbe7ec] bg-white p-5 shadow-sm"
+                    {...cardMotion}
                   >
                     <span className="grid h-12 w-12 place-items-center rounded-md bg-[#0F2A3D] text-lg font-black text-white">
                       {index + 1}
                     </span>
                     <h3 className="mt-5 text-lg font-black text-[#0F2A3D]">{step.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-[#64748B]">{step.text}</p>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section id="kostenrechner" className="bg-[#0F2A3D] py-14 text-white sm:py-16">
+        <motion.section
+          id="kostenrechner"
+          className="bg-[#0F2A3D] py-14 text-white sm:py-16"
+          {...sectionMotion}
+        >
           <div className="mx-auto grid max-w-7xl items-stretch gap-6 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
             <div className="flex h-full flex-col rounded-lg border border-white/10 bg-white/[0.06] p-5 sm:p-6">
               <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
@@ -588,11 +630,19 @@ export function LandingPage() {
                 </div>
               </div>
 
-              <div key={wizardStep} className="wizard-step-panel min-h-[320px] flex-1">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={wizardStep}
+                  className="min-h-[320px] flex-1"
+                  initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                  animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                  exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
               {wizardStep === 1 ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {(Object.keys(services) as ServiceKey[]).map((service) => (
-                    <button
+                    <motion.button
                       key={service}
                       type="button"
                       onClick={() => changeService(service)}
@@ -601,9 +651,10 @@ export function LandingPage() {
                           ? "border-[#18C7B8] bg-[#e7fbf8] text-[#0F2A3D] shadow-sm"
                           : "border-[#dbe7ec] bg-white text-[#425466] hover:border-[#18C7B8]"
                       }`}
+                      {...buttonMotion}
                     >
                       {service}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               ) : null}
@@ -630,7 +681,7 @@ export function LandingPage() {
               {wizardStep === 3 ? (
                 <div className="grid gap-2 sm:grid-cols-3">
                   {(Object.keys(effort) as EffortKey[]).map((level) => (
-                    <button
+                    <motion.button
                       key={level}
                       type="button"
                       onClick={() => setSelectedEffort(level)}
@@ -639,12 +690,13 @@ export function LandingPage() {
                           ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
                           : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
                       }`}
+                      {...buttonMotion}
                     >
                       <span className="block text-lg font-black text-[#0F2A3D]">{level}</span>
                       <span className="text-sm font-medium text-[#64748B]">
                         {effort[level].hours}
                       </span>
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               ) : null}
@@ -656,7 +708,7 @@ export function LandingPage() {
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {(Object.keys(distances) as DistanceKey[]).map((distance) => (
-                      <button
+                      <motion.button
                         key={distance}
                         type="button"
                         onClick={() => setSelectedDistance(distance)}
@@ -665,12 +717,13 @@ export function LandingPage() {
                             ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
                             : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
                         }`}
+                        {...buttonMotion}
                       >
                         <span className="block font-black text-[#0F2A3D]">{distance}</span>
                         <span className="text-sm font-medium text-[#64748B]">
                           ab PLZ 44577 · Anfahrt: {distances[distance].label}
                         </span>
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </div>
@@ -699,41 +752,45 @@ export function LandingPage() {
                   <p className="mt-4 text-sm font-medium text-[#64748B]">
                     Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt.
                   </p>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={applyEstimate}
                     className="mt-5 w-full rounded-md bg-[#18C7B8] px-6 py-4 text-base font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.24)] transition hover:bg-[#15b6a8]"
+                    {...buttonMotion}
                   >
                     Mit dieser Einschätzung anfragen
-                  </button>
+                  </motion.button>
                 </div>
               ) : null}
 
-              </div>
+                </motion.div>
+              </AnimatePresence>
 
               <div className="mt-6 flex gap-3">
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setWizardStep((step) => Math.max(1, step - 1))}
                   disabled={wizardStep === 1}
                   className="rounded-md border border-[#dbe7ec] bg-white px-5 py-3 font-black text-[#0F2A3D]"
+                  {...buttonMotion}
                 >
                   Zurück
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={() => setWizardStep((step) => Math.min(5, step + 1))}
                   disabled={wizardStep === 5 || !canGoNext}
                   className="ml-auto rounded-md bg-[#0F2A3D] px-5 py-3 font-black text-white"
+                  {...buttonMotion}
                 >
                   Weiter
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="bg-white py-18 sm:py-20">
+        <motion.section className="bg-white py-18 sm:py-20" {...sectionMotion}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
               <SectionIntro
@@ -743,20 +800,21 @@ export function LandingPage() {
               />
               <div className="grid gap-4 sm:grid-cols-2">
                 {careCards.map((card) => (
-                  <div
+                  <motion.div
                     key={card.title}
                     className="rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-6 shadow-sm"
+                    {...cardMotion}
                   >
                     <p className="text-xl font-black text-[#0F2A3D]">{card.title}</p>
                     <p className="mt-3 leading-7 text-[#64748B]">{card.text}</p>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="py-18 sm:py-20">
+        <motion.section className="py-18 sm:py-20" {...sectionMotion}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="rounded-lg border border-[#dbe7ec] bg-white p-6 shadow-[0_20px_55px_rgba(15,42,61,0.08)] sm:p-8">
               <SectionIntro
@@ -784,9 +842,9 @@ export function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section id="anfrage" className="bg-white py-14 sm:py-16">
+        <motion.section id="anfrage" className="bg-white py-14 sm:py-16" {...sectionMotion}>
           <div className="mx-auto grid max-w-7xl items-stretch gap-7 px-4 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
             <div className="flex h-full flex-col">
               <SectionIntro
@@ -801,12 +859,13 @@ export function LandingPage() {
                 <p className="mt-3 text-2xl font-black">
                   Kurze Anfrage senden, Rückmeldung erhalten.
                 </p>
-                <a
+                <motion.a
                   href={`https://wa.me/${whatsappNumber}`}
                   className="mt-6 block rounded-md bg-[#18C7B8] px-5 py-4 text-center text-base font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.22)]"
+                  {...buttonMotion}
                 >
                   WhatsApp öffnen
-                </a>
+                </motion.a>
                 <div className="mt-6 grid gap-3 text-sm text-[#d5e6ec]">
                   <p>E-Mail: kontakt@klickhafen.de</p>
                   <p>
@@ -820,10 +879,18 @@ export function LandingPage() {
               </div>
             </div>
 
-            <form
+            <motion.form
               ref={formRef}
               onSubmit={submitRequest}
               className="grid gap-4 rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5 shadow-[0_18px_45px_rgba(15,42,61,0.08)] sm:p-6"
+              {...(reduceMotion
+                ? {}
+                : {
+                    initial: { opacity: 0, y: 12 },
+                    whileInView: { opacity: 1, y: 0 },
+                    viewport: { once: true, amount: 0.2 },
+                    transition: { duration: 0.35 },
+                  })}
             >
               <div className="grid gap-4 sm:grid-cols-[0.6fr_1fr_1fr]">
                 <Field label="Anrede">
@@ -920,28 +987,86 @@ export function LandingPage() {
                 </p>
               ) : null}
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={submitState === "loading"}
                 className="rounded-md bg-[#0F2A3D] px-6 py-4 text-base font-black text-white shadow-[0_16px_34px_rgba(15,42,61,0.22)] transition hover:bg-[#14354d]"
+                {...buttonMotion}
               >
                 Anfrage senden
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
           </div>
-        </section>
+        </motion.section>
       </main>
 
-      <footer className="bg-[#0F2A3D] px-4 py-8 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-black">Klickhafen Lokalservice</p>
-          <div className="flex gap-5 text-sm font-medium text-[#d5e6ec]">
-            <a href="#anfrage">Impressum</a>
-            <a href="#anfrage">Datenschutz</a>
-            <a href="#anfrage">Kontakt</a>
+      <motion.footer
+        className="bg-[#0F2A3D] px-4 py-10 text-white"
+        {...(reduceMotion
+          ? {}
+          : {
+              initial: { opacity: 0, y: 16 },
+              whileInView: { opacity: 1, y: 0 },
+              viewport: { once: true, amount: 0.2 },
+              transition: { duration: 0.4 },
+            })}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 md:grid-cols-[1.35fr_1fr_1fr]">
+            <motion.div {...(reduceMotion ? {} : { whileHover: { y: -2 } })}>
+              <p className="text-xl font-black">Klickhafen Lokalservice</p>
+              <p className="mt-3 max-w-sm text-sm leading-6 text-[#d5e6ec]">
+                Haus, Garten & Objektservice rund um Castrop-Rauxel.
+              </p>
+            </motion.div>
+
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
+                Navigation
+              </p>
+              <div className="mt-4 grid gap-3 text-sm font-medium text-[#d5e6ec]">
+                {[
+                  ["Leistungen", "#leistungen"],
+                  ["Ablauf", "#ablauf"],
+                  ["Kostenrechner", "#kostenrechner"],
+                  ["Anfrage", "#anfrage"],
+                ].map(([label, href]) => (
+                  <motion.a
+                    key={label}
+                    href={href}
+                    className="transition hover:text-[#18C7B8]"
+                    {...(reduceMotion ? {} : { whileHover: { x: 3 } })}
+                  >
+                    {label}
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
+                Rechtliches
+              </p>
+              <div className="mt-4 grid gap-3 text-sm font-medium text-[#d5e6ec]">
+                {["Impressum", "Datenschutz", "Kontakt"].map((label) => (
+                  <motion.a
+                    key={label}
+                    href="#anfrage"
+                    className="transition hover:text-[#18C7B8]"
+                    {...(reduceMotion ? {} : { whileHover: { x: 3 } })}
+                  >
+                    {label}
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-white/12 pt-5 text-sm text-[#d5e6ec]">
+            © Klickhafen.de Webdesign und Entwicklung
           </div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }
