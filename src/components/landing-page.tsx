@@ -164,6 +164,17 @@ const careCards = [
   },
 ];
 
+const brandLogos = [
+  { name: "Makita", src: "/brands/makita.svg" },
+  { name: "Parkside" },
+  { name: "STIHL", src: "/brands/stihl.svg" },
+  { name: "Bosch", src: "/brands/bosch.svg" },
+  { name: "Kärcher", src: "/brands/kaercher.svg" },
+  { name: "Einhell", src: "/brands/einhell.png" },
+  { name: "DeWalt", src: "/brands/dewalt.jpg" },
+  { name: "Lidl", src: "/brands/lidl.svg" },
+];
+
 type ServiceKey = keyof typeof services;
 type EffortKey = keyof typeof effort;
 type DistanceKey = keyof typeof distances;
@@ -980,6 +991,46 @@ export function LandingPage() {
           </div>
         </motion.section>
       </main>
+
+      <motion.section className="bg-[#F4F8FA] px-4 py-10 sm:px-6" {...sectionMotion}>
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
+                Werkzeug & Ausstattung
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-[#0F2A3D]">
+                Marken, mit denen wir arbeiten
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-[#64748B]">
+              Vertraute Hersteller aus Gartenpflege, Reinigung, Montage und Objektservice.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+            {brandLogos.map((brand) => (
+              <motion.div
+                key={brand.name}
+                className="group grid min-h-24 place-items-center rounded-lg border border-[#dbe7ec] bg-white p-5 shadow-sm transition hover:border-[#18C7B8] hover:shadow-[0_16px_34px_rgba(15,42,61,0.1)]"
+                {...(reduceMotion ? {} : { whileHover: { y: -3 }, whileTap: { scale: 0.98 } })}
+              >
+                {brand.src ? (
+                  <img
+                    src={brand.src}
+                    alt={brand.name}
+                    className="max-h-10 max-w-[150px] object-contain opacity-70 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                  />
+                ) : (
+                  <span className="rounded-md bg-[#0F2A3D] px-4 py-2 text-lg font-black tracking-wide text-white opacity-70 grayscale transition duration-300 group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D] group-hover:opacity-100 group-hover:grayscale-0">
+                    {brand.name}
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
 
       <motion.footer
         className="bg-[#0F2A3D] px-4 py-10 text-white"
