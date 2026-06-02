@@ -24,7 +24,7 @@ export function CookieNotice() {
           animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
           exit={reduceMotion ? undefined : { opacity: 0, x: 34 }}
           transition={{ duration: 0.28, ease: "easeOut" }}
-          className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm rounded-lg border border-[#dbe7ec] bg-white p-5 text-[#10212E] shadow-[0_22px_55px_rgba(15,42,61,0.18)] sm:bottom-6 sm:right-6"
+          className="fixed bottom-24 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm rounded-lg border border-[#dbe7ec] bg-white p-5 text-[#10212E] shadow-[0_22px_55px_rgba(15,42,61,0.18)] sm:bottom-28 sm:right-6"
           aria-label="Cookie-Hinweis"
         >
           <div className="flex items-start gap-3">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { CookieNotice } from "@/components/cookie-notice";
 import { StructuredData } from "@/components/structured-data";
+import { WhatsAppWidget } from "@/components/whatsapp-widget";
 import { absoluteUrl, serviceAreas, serviceNames, siteDescription, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -92,6 +93,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <StructuredData />
         {children}
+        <WhatsAppWidget />
         <CookieNotice />
       </body>
     </html>
