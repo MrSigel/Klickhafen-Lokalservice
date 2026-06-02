@@ -212,7 +212,9 @@ export function LandingPage() {
     const max = selected.max * 23.8 + travelFee;
     const fixed = max * 0.85;
     const travelNote =
-      distance.fee === null ? "Anfahrt nach Absprache" : `Anfahrt: ${distance.label}`;
+      distance.fee === null
+        ? "Anfahrt ab PLZ 44577 nach Absprache"
+        : `Anfahrt ab PLZ 44577: ${distance.label}`;
 
     return {
       range: `ca. ${formatEuro(min)}-${formatEuro(max)}`,
@@ -240,7 +242,7 @@ export function LandingPage() {
       `Leistung: ${selectedService}`,
       selectedExtras.length ? `Zusatzarbeiten: ${selectedExtras.join(", ")}` : "",
       `Aufwand: ${selectedEffort} (${estimate.effortText})`,
-      `Entfernung: ${selectedDistance}`,
+      `Entfernung ab PLZ 44577: ${selectedDistance}`,
       `Preisschätzung: ${estimate.range}`,
       `Festpreis-Schätzung: ${estimate.fixed}`,
       estimate.travelNote,
@@ -542,8 +544,8 @@ export function LandingPage() {
         </section>
 
         <section id="kostenrechner" className="bg-[#0F2A3D] py-14 text-white sm:py-16">
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:px-8">
-            <div className="rounded-lg border border-white/10 bg-white/[0.06] p-5 sm:p-6">
+          <div className="mx-auto grid max-w-7xl items-stretch gap-6 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
+            <div className="flex h-full flex-col rounded-lg border border-white/10 bg-white/[0.06] p-5 sm:p-6">
               <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
                 Kostenrechner
               </p>
@@ -557,9 +559,18 @@ export function LandingPage() {
               <p className="mt-5 rounded-md bg-white/10 p-4 text-sm text-[#d5e6ec]">
                 Die Berechnung dient nur zur Orientierung und ersetzt kein individuelles Angebot.
               </p>
+              <div className="mt-auto grid gap-3 pt-6">
+                <p className="rounded-md bg-white/10 p-4 text-sm font-bold text-white">
+                  Ausgangspunkt für die Entfernung: PLZ 44577 Castrop-Rauxel
+                </p>
+                <p className="rounded-md bg-white/10 p-4 text-sm text-[#d5e6ec]">
+                  Wählen Sie im Wizard die passende Entfernungsklasse, damit die Anfahrt in der
+                  Schätzung berücksichtigt wird.
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-lg bg-white p-5 text-[#10212E] shadow-[0_24px_60px_rgba(0,0,0,0.2)] sm:p-6">
+            <div className="flex h-full min-h-[520px] flex-col rounded-lg bg-white p-5 text-[#10212E] shadow-[0_24px_60px_rgba(0,0,0,0.2)] sm:p-6">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-black text-[#18C7B8]">Schritt {wizardStep} von 5</p>
@@ -579,6 +590,7 @@ export function LandingPage() {
                 </div>
               </div>
 
+              <div key={wizardStep} className="wizard-step-panel min-h-[320px] flex-1">
               {wizardStep === 1 ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {(Object.keys(services) as ServiceKey[]).map((service) => (
@@ -640,24 +652,29 @@ export function LandingPage() {
               ) : null}
 
               {wizardStep === 4 ? (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {(Object.keys(distances) as DistanceKey[]).map((distance) => (
-                    <button
-                      key={distance}
-                      type="button"
-                      onClick={() => setSelectedDistance(distance)}
-                      className={`rounded-md border px-4 py-4 text-left transition ${
-                        selectedDistance === distance
-                          ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
-                          : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
-                      }`}
-                    >
-                      <span className="block font-black text-[#0F2A3D]">{distance}</span>
-                      <span className="text-sm font-medium text-[#64748B]">
-                        Anfahrt: {distances[distance].label}
-                      </span>
-                    </button>
-                  ))}
+                <div>
+                  <p className="mb-3 rounded-md bg-[#F4F8FA] px-4 py-3 text-sm font-bold text-[#0F2A3D]">
+                    Entfernung jeweils ab PLZ 44577 Castrop-Rauxel auswählen.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {(Object.keys(distances) as DistanceKey[]).map((distance) => (
+                      <button
+                        key={distance}
+                        type="button"
+                        onClick={() => setSelectedDistance(distance)}
+                        className={`rounded-md border px-4 py-4 text-left transition ${
+                          selectedDistance === distance
+                            ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
+                            : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
+                        }`}
+                      >
+                        <span className="block font-black text-[#0F2A3D]">{distance}</span>
+                        <span className="text-sm font-medium text-[#64748B]">
+                          ab PLZ 44577 · Anfahrt: {distances[distance].label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : null}
 
@@ -693,6 +710,8 @@ export function LandingPage() {
                   </button>
                 </div>
               ) : null}
+
+              </div>
 
               <div className="mt-6 flex gap-3">
                 <button
