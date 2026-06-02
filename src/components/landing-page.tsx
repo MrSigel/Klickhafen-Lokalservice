@@ -44,11 +44,9 @@ const services = {
     "Entsorgung benötigt",
   ],
   Notfallservice: [
-    "Türöffnung",
-    "WC-Verstopfung",
-    "Abfluss verstopft",
-    "Rohrverstopfung",
-    "Gartenablauf verstopft",
+    "Schlüsseldienst",
+    "Verstopfung / Abfluss / WC",
+    "Sonstiger Notfall",
   ],
 };
 
@@ -59,19 +57,28 @@ const effort = {
 };
 
 const distances = {
-  "Bis 5 km": { fee: 0, label: "0 €" },
-  "5-15 km": { fee: 15, label: "15 €" },
-  "15-25 km": { fee: 30, label: "30 €" },
-  "25-35 km": { fee: 45, label: "45 €" },
-  "Mehr als 35 km": { fee: null, label: "nach Absprache" },
-};
-
-const emergencyDistances = {
   "Bis 10 km": { fee: 0, label: "inklusive" },
-  "10-20 km": { fee: 15, label: "+15 €" },
-  "20-30 km": { fee: 30, label: "+30 €" },
+  "10–20 km": { fee: 15, label: "+15 €" },
+  "20–30 km": { fee: 30, label: "+30 €" },
   "Ab 30 km": { fee: null, label: "nach Absprache" },
 };
+
+const hourlyRates = {
+  Gartenarbeiten: 20,
+  Reinigung: 15,
+  Montage: 25,
+  Bodenverlegung: 25,
+  Entrümpelung: 15,
+};
+
+const vatMultiplier = 1.19;
+const offerNotice =
+  "Wichtig: Diese Berechnung ist eine unverbindliche Einschätzung. Vor Auftragsbeginn erhalten Sie ein individuelles Angebot mit dem finalen Preis. Erst nach Ihrer schriftlichen oder digitalen Bestätigung beginnt die Arbeit.";
+const noOrderNotice = "Ohne bestätigtes Angebot wird kein Auftrag ausgeführt.";
+const materialNotice =
+  "Benötigtes Material wird entweder vom Kunden bereitgestellt oder nach vorheriger Zahlung von uns besorgt. Kassenbon/Rechnung sowie mögliches Rückgeld werden transparent weitergegeben.";
+const clearanceNotice =
+  "Sprinter, Sprit, Entsorgungskosten und Fremdkosten können separat hinzukommen und werden vorab transparent abgestimmt.";
 
 const statusText = {
   idle: "",
@@ -264,7 +271,7 @@ const brandLogos = [
 
 type ServiceKey = keyof typeof services;
 type EffortKey = keyof typeof effort;
-type DistanceKey = keyof typeof distances | keyof typeof emergencyDistances;
+type DistanceKey = keyof typeof distances;
 type FormFallback = {
   title: string;
   text: string;
@@ -300,7 +307,7 @@ export function LandingPage() {
   const [selectedService, setSelectedService] = useState<ServiceKey>("Gartenarbeiten");
   const [selectedExtras, setSelectedExtras] = useState<string[]>(["Rasen mähen"]);
   const [selectedEffort, setSelectedEffort] = useState<EffortKey>("Mittel");
-  const [selectedDistance, setSelectedDistance] = useState<DistanceKey>("Bis 5 km");
+  const [selectedDistance, setSelectedDistance] = useState<DistanceKey>("Bis 10 km");
   const [wizardStep, setWizardStep] = useState(1);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [files, setFiles] = useState<File[]>([]);
@@ -332,49 +339,84 @@ export function LandingPage() {
       };
 
   const estimate = useMemo(() => {
+    const distance = distances[selectedDistance];
+    const distanceFee = distance.fee ?? 0;
+    const distanceIsOpen = distance.fee === null;
+
     if (selectedService === "Notfallservice") {
-      const distance = emergencyDistances[selectedDistance as keyof typeof emergencyDistances];
-      const travelFee = distance?.fee ?? 0;
-      const isDoorOpening = selectedExtras.includes("Türöffnung");
-      const basePrice = isDoorOpening ? 79 : 89;
-      const total = basePrice + travelFee;
+      const isLocksmith = selectedExtras.includes("Schlüsseldienst");
+      const isOtherEmergency = selectedExtras.includes("Sonstiger Notfall");
+      const baseGross = isLocksmith ? 55 * vatMultiplier : isOtherEmergency ? null : 75 * vatMultiplier;
+      const total = baseGross === null || distanceIsOpen ? null : baseGross + distanceFee;
       const travelNote =
-        distance?.fee === null
-          ? "Anfahrt ab 30 km nach Absprache"
+        distanceIsOpen
+          ? "Anfahrt nach Absprache"
           : selectedDistance === "Bis 10 km"
             ? "Anfahrt bis 10 km inklusive"
-            : `Anfahrt ${selectedDistance}: ${distance?.label}`;
+            : `Anfahrt ${selectedDistance}: ${distance.label}`;
+      const range =
+        total === null
+          ? isOtherEmergency
+            ? "nach individueller Einschätzung"
+            : `ab ${formatEuro(baseGross ?? 0)} + Anfahrt nach Absprache`
+          : `ab ${formatEuro(total)}`;
 
       return {
-        range: `ca. ${formatEuro(total)}`,
-        fixed: `ab ${formatEuro(total)}`,
-        effortText: "einfacher Notfalleinsatz",
+        category: selectedService,
+        extras: selectedExtras,
+        effort: "Notfallservice ohne Stundenlogik",
+        distance: selectedDistance,
+        range,
+        fixed: "",
+        fixedLabel: "",
+        effortText: isOtherEmergency ? "individuelle Einschätzung" : "einfacher Notfalleinsatz",
         travelNote,
-        full: `Unverbindliche Orientierung: ca. ${formatEuro(total)} | ${travelNote} | Der genaue Preis wird vor Beginn bestätigt.`,
+        offerNotice,
+        noOrderNotice,
+        materialNotice,
+        extraNotice: "Der genaue Preis wird vor Beginn bestätigt.",
+        full: `Unverbindliche Schätzung: ${range} | ${travelNote} | Der genaue Preis wird vor Beginn bestätigt.`,
       };
     }
 
     const selected = effort[selectedEffort];
-    const distance = distances[selectedDistance as keyof typeof distances];
-    const travelFee = distance.fee ?? 0;
-    const min = selected.min * 23.8 + travelFee;
-    const max = selected.max * 23.8 + travelFee;
-    const fixed = max * 0.85;
+    const hourlyRateGross = hourlyRates[selectedService as keyof typeof hourlyRates] * vatMultiplier;
+    const min = distanceIsOpen ? null : selected.min * hourlyRateGross + distanceFee;
+    const max = distanceIsOpen ? null : selected.max * hourlyRateGross + distanceFee;
+    const fixed = max === null ? null : Math.round(max) * 0.85;
     const travelNote =
-      distance.fee === null
-        ? "Anfahrt ab PLZ 44577 nach Absprache"
-        : `Anfahrt ab PLZ 44577: ${distance.label}`;
+      distanceIsOpen
+        ? "Anfahrt nach Absprache"
+        : selectedDistance === "Bis 10 km"
+          ? "Anfahrt bis 10 km inklusive"
+          : `Anfahrt ${selectedDistance}: ${distance.label}`;
+    const range = min === null || max === null ? "nach Absprache" : `ca. ${formatEuro(min)}–${formatEuro(max)}`;
+    const fixedLabel = fixed === null ? "nach Angebot" : `ab ${formatEuro(fixed)}`;
 
     return {
-      range: `ca. ${formatEuro(min)}-${formatEuro(max)}`,
-      fixed: `ab ${formatEuro(fixed)}`,
+      category: selectedService,
+      extras: selectedExtras,
+      effort: `${selectedEffort} (${selected.hours})`,
+      distance: selectedDistance,
+      range,
+      fixed: fixedLabel,
+      fixedLabel,
       effortText: `Aufwand ca. ${selected.hours}`,
       travelNote,
-      full: `Unverbindliche Schätzung: ca. ${formatEuro(min)}-${formatEuro(max)} | Festpreis-Vorteil: ab ${formatEuro(fixed)} | ${travelNote}`,
+      offerNotice,
+      noOrderNotice,
+      materialNotice,
+      extraNotice: selectedService === "Entrümpelung" ? clearanceNotice : "",
+      full: `Unverbindliche Schätzung: ${range} | Festpreis-Vorschlag: ${fixedLabel} | ${travelNote}`,
     };
   }, [selectedEffort, selectedDistance, selectedExtras, selectedService]);
 
   function toggleExtra(extra: string) {
+    if (selectedService === "Notfallservice") {
+      setSelectedExtras([extra]);
+      return;
+    }
+
     setSelectedExtras((current) =>
       current.includes(extra) ? current.filter((item) => item !== extra) : [...current, extra],
     );
@@ -383,21 +425,20 @@ export function LandingPage() {
   function changeService(service: ServiceKey) {
     setSelectedService(service);
     setSelectedExtras([services[service][0]]);
-    setSelectedDistance(service === "Notfallservice" ? "Bis 10 km" : "Bis 5 km");
+    setSelectedDistance("Bis 10 km");
   }
 
   function applyEstimate() {
     const summary = [
-      "Preisschätzung aus dem Kostenrechner:",
-      `Leistung: ${selectedService}`,
+      "Unverbindliche Einschätzung aus dem Kostenrechner:",
+      `Kategorie: ${selectedService}`,
       selectedExtras.length ? `Zusatzarbeiten: ${selectedExtras.join(", ")}` : "",
-      selectedService === "Notfallservice"
-        ? `Einsatz: ${estimate.effortText}`
-        : `Aufwand: ${selectedEffort} (${estimate.effortText})`,
-      `Entfernung ab PLZ 44577: ${selectedDistance}`,
+      selectedService === "Notfallservice" ? `Aufwand: ${estimate.effortText}` : `Aufwand: ${estimate.effort}`,
+      `Entfernung: ${selectedDistance}`,
       `Preisschätzung: ${estimate.range}`,
-      `Festpreis-Schätzung: ${estimate.fixed}`,
+      selectedService !== "Notfallservice" ? `Festpreis-Vorschlag: ${estimate.fixed}` : "",
       estimate.travelNote,
+      "Ich wünsche ein individuelles Angebot.",
     ]
       .filter(Boolean)
       .join("\n");
@@ -468,11 +509,17 @@ export function LandingPage() {
     data.append(
       "calculatorData",
       JSON.stringify({
-        service: selectedService,
+        category: estimate.category,
         extras: selectedExtras,
-        effort: selectedEffort,
-        distance: selectedDistance,
-        estimate,
+        effort: estimate.effort,
+        distance: estimate.distance,
+        priceEstimate: estimate.range,
+        fixedPrice: selectedService === "Notfallservice" ? null : estimate.fixed,
+        travelNote: estimate.travelNote,
+        offerNotice: estimate.offerNotice,
+        materialNotice: estimate.materialNotice,
+        extraNotice: estimate.extraNotice,
+        isEmergency: selectedService === "Notfallservice",
       }),
     );
     files.forEach((file) => data.append("files", file));
@@ -515,8 +562,7 @@ export function LandingPage() {
   const emergencyWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Hallo, ich benötige schnelle Hilfe. Mein Anliegen:",
   )}`;
-  const activeDistances = selectedService === "Notfallservice" ? emergencyDistances : distances;
-  const activeDistanceEntries = Object.entries(activeDistances) as [
+  const activeDistanceEntries = Object.entries(distances) as [
     DistanceKey,
     { fee: number | null; label: string },
   ][];
@@ -974,6 +1020,15 @@ export function LandingPage() {
 
               {wizardStep === 5 ? (
                 <div className="rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5">
+                  <div className="mb-4 grid gap-2 text-sm text-[#425466] sm:grid-cols-2">
+                    <ResultLine label="Kategorie" value={estimate.category} />
+                    <ResultLine
+                      label="Zusatzleistungen"
+                      value={selectedExtras.length ? selectedExtras.join(", ") : "-"}
+                    />
+                    <ResultLine label="Aufwand" value={estimate.effort} />
+                    <ResultLine label="Entfernung" value={estimate.distance} />
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-md bg-white p-5 ring-1 ring-[#dbe7ec]">
                       <p className="text-sm font-bold text-[#64748B]">
@@ -982,21 +1037,30 @@ export function LandingPage() {
                       <p className="mt-3 text-2xl font-black text-[#0F2A3D]">{estimate.range}</p>
                       <p className="mt-2 text-sm text-[#64748B]">{estimate.travelNote}</p>
                     </div>
-                    <div className="relative rounded-md border border-[#18C7B8] bg-white p-5 shadow-sm">
-                      <span className="absolute right-4 top-4 rounded-md bg-[#18C7B8] px-2 py-1 text-xs font-black text-[#0F2A3D]">
-                        Empfehlung
-                      </span>
-                      <p className="pr-28 text-sm font-bold text-[#64748B]">
-                        Festpreis-Vorteil
-                      </p>
-                      <p className="mt-3 text-2xl font-black text-[#0F2A3D]">{estimate.fixed}</p>
-                    </div>
+                    {selectedService !== "Notfallservice" ? (
+                      <div className="relative rounded-md border border-[#18C7B8] bg-white p-5 shadow-sm">
+                        <span className="absolute right-4 top-4 rounded-md bg-[#18C7B8] px-2 py-1 text-xs font-black text-[#0F2A3D]">
+                          Empfehlung
+                        </span>
+                        <p className="pr-28 text-sm font-bold text-[#64748B]">
+                          Empfohlener Festpreis-Vorschlag
+                        </p>
+                        <p className="mt-3 text-2xl font-black text-[#0F2A3D]">{estimate.fixed}</p>
+                      </div>
+                    ) : null}
                   </div>
-                  <p className="mt-4 text-sm font-medium text-[#64748B]">
-                    {selectedService === "Notfallservice"
-                      ? "Der genaue Preis wird vor Beginn bestätigt."
-                      : "Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt."}
+                  <div className="mt-4 rounded-md border border-[#18C7B8] bg-white p-4">
+                    <p className="font-black text-[#0F2A3D]">{estimate.offerNotice}</p>
+                    <p className="mt-2 text-sm font-bold text-[#64748B]">{estimate.noOrderNotice}</p>
+                  </div>
+                  <p className="mt-4 rounded-md bg-white p-4 text-sm font-medium leading-6 text-[#64748B]">
+                    {estimate.materialNotice}
                   </p>
+                  {estimate.extraNotice ? (
+                    <p className="mt-3 rounded-md bg-white p-4 text-sm font-medium leading-6 text-[#64748B]">
+                      {estimate.extraNotice}
+                    </p>
+                  ) : null}
                   <motion.button
                     type="button"
                     onClick={applyEstimate}
@@ -1076,6 +1140,7 @@ export function LandingPage() {
                   "Sprinter und Entsorgung separat nach Aufwand",
                   "Rechnung auf Wunsch möglich",
                   "Betriebshaftpflicht vorhanden",
+                  materialNotice,
                 ].map((item) => (
                   <p
                     key={item}
@@ -1258,6 +1323,10 @@ export function LandingPage() {
                   Datenschutzerklärung
                 </a>
                 .
+              </p>
+              <p className="rounded-md border border-[#dbe7ec] bg-white p-3 text-xs font-bold leading-5 text-[#0F2A3D]">
+                Nach Ihrer Anfrage erhalten Sie ein individuelles Angebot. Die Arbeit beginnt erst,
+                nachdem Sie das Angebot schriftlich oder digital bestätigt haben.
               </p>
             </motion.form>
           </div>
@@ -1564,6 +1633,15 @@ function TrustIcon({ name }: { name: string }) {
       <path d="M12 3 5 6v5c0 4.6 3 8.5 7 10 4-1.5 7-5.4 7-10V6l-7-3Z" />
       <path d="m9 12 2 2 4-5" />
     </svg>
+  );
+}
+
+function ResultLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white p-3 ring-1 ring-[#dbe7ec]">
+      <p className="text-xs font-black uppercase text-[#64748B]">{label}</p>
+      <p className="mt-1 font-bold text-[#0F2A3D]">{value}</p>
+    </div>
   );
 }
 

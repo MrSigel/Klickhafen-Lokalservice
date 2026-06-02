@@ -31,12 +31,52 @@ type ServiceRequest = {
   request_images: RequestImage[];
 };
 
+type CalculatorSummary = {
+  category: string;
+  extras: string;
+  effort: string;
+  distance: string;
+  priceEstimate: string;
+  fixedPrice: string;
+  notices: string[];
+};
+
 function displayName(request: ServiceRequest) {
   const composed = [request.salutation, request.first_name, request.last_name]
     .filter(Boolean)
     .join(" ");
 
   return composed || request.name;
+}
+
+function calculatorSummary(data: unknown): CalculatorSummary | null {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const value = data as Record<string, unknown>;
+  const estimate = value.estimate && typeof value.estimate === "object"
+    ? (value.estimate as Record<string, unknown>)
+    : {};
+  const extrasValue = value.extras ?? estimate.extras;
+  const notices = [
+    value.offerNotice,
+    value.materialNotice,
+    value.extraNotice,
+    estimate.offerNotice,
+    estimate.materialNotice,
+    estimate.extraNotice,
+  ].filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+
+  return {
+    category: String(value.category ?? value.service ?? estimate.category ?? "-"),
+    extras: Array.isArray(extrasValue) ? extrasValue.join(", ") : String(extrasValue ?? "-"),
+    effort: String(value.effort ?? estimate.effort ?? "-"),
+    distance: String(value.distance ?? estimate.distance ?? "-"),
+    priceEstimate: String(value.priceEstimate ?? estimate.range ?? "-"),
+    fixedPrice: String(value.fixedPrice ?? estimate.fixed ?? "-"),
+    notices,
+  };
 }
 
 export function AdminDashboard() {
@@ -181,6 +221,29 @@ export function AdminDashboard() {
             {selected.calculator_data ? (
               <div className="mt-6">
                 <p className="text-sm font-bold text-[#0F2A3D]">Kostenrechner-Daten</p>
+                {calculatorSummary(selected.calculator_data) ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {[
+                      ["Kategorie", calculatorSummary(selected.calculator_data)?.category ?? "-"],
+                      ["Zusatzleistungen", calculatorSummary(selected.calculator_data)?.extras ?? "-"],
+                      ["Aufwand", calculatorSummary(selected.calculator_data)?.effort ?? "-"],
+                      ["Entfernung", calculatorSummary(selected.calculator_data)?.distance ?? "-"],
+                      ["Preisschätzung", calculatorSummary(selected.calculator_data)?.priceEstimate ?? "-"],
+                      ["Festpreis-Vorschlag", calculatorSummary(selected.calculator_data)?.fixedPrice ?? "-"],
+                    ].map(([label, value]) => (
+                      <Info key={label} label={label} value={value} />
+                    ))}
+                    {calculatorSummary(selected.calculator_data)?.notices.map((notice) => (
+                      <div
+                        key={notice}
+                        className="rounded-md bg-[#F4F8FA] p-4 sm:col-span-2"
+                      >
+                        <p className="text-xs font-bold uppercase text-[#64748B]">Hinweis</p>
+                        <p className="mt-1 font-semibold text-[#0F2A3D]">{notice}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-[#0F2A3D] p-4 text-xs text-white">
                   {JSON.stringify(selected.calculator_data, null, 2)}
                 </pre>
