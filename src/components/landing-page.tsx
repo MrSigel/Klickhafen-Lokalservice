@@ -822,6 +822,7 @@ export function LandingPage() {
                   "Preise inkl. MwSt.",
                   "Sprinter und Entsorgung separat nach Aufwand",
                   "Rechnung auf Wunsch möglich",
+                  "Betriebshaftpflicht vorhanden",
                 ].map((item) => (
                   <p
                     key={item}
@@ -953,7 +954,8 @@ export function LandingPage() {
                   className="block w-full rounded-md border border-dashed border-[#9fc5cf] bg-white px-4 py-4 text-sm font-medium text-[#425466]"
                 />
                 <span className="text-xs font-medium text-[#64748B]">
-                  Maximal 5 Dateien, Bilder oder Videos.
+                  Sie können bis zu 5 Bilder oder Videos hochladen. Bitte laden Sie nur Dateien hoch,
+                  die für die Einschätzung Ihres Anliegens notwendig sind.
                 </span>
               </Field>
 
@@ -987,6 +989,15 @@ export function LandingPage() {
               >
                 Anfrage senden
               </motion.button>
+              <p className="text-xs leading-5 text-[#64748B]">
+                Ihre Angaben werden zur Bearbeitung Ihrer Anfrage verarbeitet. Hochgeladene Dateien
+                werden nur zur Einschätzung Ihres Anliegens genutzt. Weitere Informationen finden Sie
+                in der{" "}
+                <a href="/datenschutz" className="font-bold text-[#0F2A3D] underline decoration-[#18C7B8] underline-offset-4 hover:text-[#18C7B8]">
+                  Datenschutzerklärung
+                </a>
+                .
+              </p>
             </motion.form>
           </div>
         </motion.section>
@@ -1084,10 +1095,15 @@ export function LandingPage() {
                 Rechtliches
               </p>
               <div className="mt-4 grid gap-3 text-sm font-medium text-[#d5e6ec]">
-                {["Impressum", "Datenschutz", "Kontakt"].map((label) => (
+                {[
+                  ["Impressum", "/impressum"],
+                  ["Datenschutz", "/datenschutz"],
+                  ["AGB", "/agb"],
+                  ["Kontakt", "#anfrage"],
+                ].map(([label, href]) => (
                   <motion.a
                     key={label}
-                    href="#anfrage"
+                    href={href}
                     className="transition hover:text-[#18C7B8]"
                     {...(reduceMotion ? {} : { whileHover: { x: 3 } })}
                   >
