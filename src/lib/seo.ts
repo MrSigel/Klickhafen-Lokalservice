@@ -26,6 +26,37 @@ export const serviceNames = [
   "Objektpflege",
 ];
 
+export const faqItems = [
+  {
+    question: "Muss ich Bilder senden?",
+    answer:
+      "Bilder helfen uns, den Aufwand besser einzuschätzen. Sie können bis zu 5 Bilder oder Videos hochladen.",
+  },
+  {
+    question: "Ist der Kostenrechner verbindlich?",
+    answer:
+      "Nein. Der Kostenrechner zeigt nur eine unverbindliche Orientierung. Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt.",
+  },
+  {
+    question: "Welche Orte werden bedient?",
+    answer:
+      "Wir sind rund um Castrop-Rauxel, Dortmund, Herne, Bochum und Umgebung im Einsatz.",
+  },
+  {
+    question: "Sind Festpreise möglich?",
+    answer: "Ja. Je nach Auftrag sind Stundenpreis oder Festpreis möglich.",
+  },
+  {
+    question: "Kann ich regelmäßige Pflege buchen?",
+    answer:
+      "Ja. Wiederkehrende Arbeiten sind wöchentlich, monatlich, saisonal oder jährlich möglich.",
+  },
+  {
+    question: "Wie schnell bekomme ich eine Rückmeldung?",
+    answer: "In der Regel melden wir uns zeitnah nach Eingang Ihrer Anfrage zurück.",
+  },
+];
+
 export const siteDescription =
   "Klickhafen Lokalservice übernimmt Gartenpflege, Reinigung, Montage, Bodenverlegung, Entrümpelung und Objektpflege in Castrop-Rauxel, Dortmund, Herne und Bochum.";
 
@@ -110,6 +141,22 @@ export function serviceSchema() {
   };
 }
 
+export function faqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${siteUrl}/#faq`,
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
 export function structuredData() {
-  return [localBusinessSchema(), websiteSchema(), serviceSchema()];
+  return [localBusinessSchema(), websiteSchema(), serviceSchema(), faqSchema()];
 }

@@ -164,6 +164,65 @@ const careCards = [
   },
 ];
 
+const trustCards = [
+  {
+    icon: "clock",
+    title: "Schnelle Rückmeldung",
+    text: "Wir prüfen Ihre Anfrage zeitnah und melden uns mit einer Einschätzung.",
+  },
+  {
+    icon: "image",
+    title: "Angebot per Bilder möglich",
+    text: "Viele Arbeiten können wir anhand Ihrer Bilder vorab einschätzen.",
+  },
+  {
+    icon: "map",
+    title: "Lokal im Einsatz",
+    text: "Rund um Castrop-Rauxel, Dortmund, Herne und Bochum.",
+  },
+  {
+    icon: "calculator",
+    title: "Stundenpreis oder Festpreis",
+    text: "Je nach Auftrag flexibel und transparent kalkuliert.",
+  },
+  {
+    icon: "shield",
+    title: "Betriebshaftpflicht vorhanden",
+    text: "Für ein sicheres Gefühl bei der Auftragsvergabe.",
+  },
+];
+
+const faqItems = [
+  {
+    question: "Muss ich Bilder senden?",
+    answer:
+      "Bilder helfen uns, den Aufwand besser einzuschätzen. Sie können bis zu 5 Bilder oder Videos hochladen.",
+  },
+  {
+    question: "Ist der Kostenrechner verbindlich?",
+    answer:
+      "Nein. Der Kostenrechner zeigt nur eine unverbindliche Orientierung. Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt.",
+  },
+  {
+    question: "Welche Orte werden bedient?",
+    answer:
+      "Wir sind rund um Castrop-Rauxel, Dortmund, Herne, Bochum und Umgebung im Einsatz.",
+  },
+  {
+    question: "Sind Festpreise möglich?",
+    answer: "Ja. Je nach Auftrag sind Stundenpreis oder Festpreis möglich.",
+  },
+  {
+    question: "Kann ich regelmäßige Pflege buchen?",
+    answer:
+      "Ja. Wiederkehrende Arbeiten sind wöchentlich, monatlich, saisonal oder jährlich möglich.",
+  },
+  {
+    question: "Wie schnell bekomme ich eine Rückmeldung?",
+    answer: "In der Regel melden wir uns zeitnah nach Eingang Ihrer Anfrage zurück.",
+  },
+];
+
 const brandLogos = [
   { name: "Makita", src: "/brands/makita.svg" },
   { name: "Parkside" },
@@ -501,7 +560,11 @@ export function LandingPage() {
           </div>
         </motion.section>
 
-        <motion.section id="leistungen" className="bg-white py-18 sm:py-20" {...sectionMotion}>
+        <motion.section
+          id="leistungen"
+          className="bg-white pb-16 pt-12 sm:pb-20 sm:pt-14"
+          {...sectionMotion}
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionIntro
               eyebrow="Leistungen"
@@ -567,6 +630,43 @@ export function LandingPage() {
                   </motion.div>
                 ))}
               </div>
+            </div>
+          </div>
+        </motion.section>
+
+        <motion.section className="bg-white py-14 sm:py-16" {...sectionMotion}>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <SectionIntro
+                eyebrow="Vertrauen"
+                title="Warum Klickhafen Lokalservice?"
+                text="Wir machen es Kunden einfach: Anfrage senden, Bilder hochladen und eine schnelle Einschätzung erhalten."
+              />
+              <motion.a
+                href="#anfrage"
+                className="inline-flex shrink-0 justify-center rounded-md bg-[#0F2A3D] px-5 py-3 text-sm font-black text-white shadow-[0_14px_30px_rgba(15,42,61,0.16)] transition hover:bg-[#14354d]"
+                {...buttonMotion}
+              >
+                Anfrage starten
+              </motion.a>
+            </div>
+            <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {trustCards.map((card) => (
+                <motion.article
+                  key={card.title}
+                  className="group rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5 shadow-sm transition hover:border-[#18C7B8] hover:bg-white hover:shadow-[0_16px_34px_rgba(15,42,61,0.1)]"
+                  {...cardMotion}
+                >
+                  <motion.span
+                    className="grid h-11 w-11 place-items-center rounded-xl bg-[#0F2A3D] text-[#18C7B8] transition group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D]"
+                    {...(reduceMotion ? {} : { whileHover: { rotate: -3, scale: 1.06 } })}
+                  >
+                    <TrustIcon name={card.icon} />
+                  </motion.span>
+                  <h3 className="mt-4 text-lg font-black text-[#0F2A3D]">{card.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#64748B]">{card.text}</p>
+                </motion.article>
+              ))}
             </div>
           </div>
         </motion.section>
@@ -1003,6 +1103,28 @@ export function LandingPage() {
         </motion.section>
       </main>
 
+      <motion.section className="bg-white px-4 py-14 sm:px-6 sm:py-16" {...sectionMotion}>
+        <div className="mx-auto max-w-7xl">
+          <SectionIntro
+            eyebrow="FAQ"
+            title="Häufige Fragen"
+            text="Die wichtigsten Antworten zur Anfrage, Preisschätzung und regelmäßigen Pflege."
+          />
+          <div className="mt-9 grid gap-4 lg:grid-cols-2">
+            {faqItems.map((item) => (
+              <motion.article
+                key={item.question}
+                className="rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5 shadow-sm transition hover:border-[#18C7B8] hover:bg-white hover:shadow-[0_16px_34px_rgba(15,42,61,0.08)]"
+                {...cardMotion}
+              >
+                <h3 className="text-lg font-black text-[#0F2A3D]">{item.question}</h3>
+                <p className="mt-3 leading-7 text-[#64748B]">{item.answer}</p>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
       <motion.section className="bg-[#F4F8FA] px-4 py-10 sm:px-6" {...sectionMotion}>
         <div className="mx-auto max-w-7xl">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -1205,6 +1327,70 @@ function ServiceIcon({ name }: { name: string }) {
       <path d="M7 18.5a1.5 1.5 0 1 0 0 .1" />
       <path d="M18 18.5a1.5 1.5 0 1 0 0 .1" />
       <path d="M6 11h5" />
+    </svg>
+  );
+}
+
+function TrustIcon({ name }: { name: string }) {
+  const common = {
+    width: 26,
+    height: 26,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  if (name === "clock") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    );
+  }
+
+  if (name === "image") {
+    return (
+      <svg {...common}>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 15 4-4 4 4 3-3 7 7" />
+        <circle cx="15.5" cy="9.5" r="1.5" />
+      </svg>
+    );
+  }
+
+  if (name === "map") {
+    return (
+      <svg {...common}>
+        <path d="M12 21s7-5.2 7-12a7 7 0 0 0-14 0c0 6.8 7 12 7 12Z" />
+        <circle cx="12" cy="9" r="2.4" />
+      </svg>
+    );
+  }
+
+  if (name === "calculator") {
+    return (
+      <svg {...common}>
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <path d="M8 7h8" />
+        <path d="M8 11h.01" />
+        <path d="M12 11h.01" />
+        <path d="M16 11h.01" />
+        <path d="M8 15h.01" />
+        <path d="M12 15h.01" />
+        <path d="M16 15h.01" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M12 3 5 6v5c0 4.6 3 8.5 7 10 4-1.5 7-5.4 7-10V6l-7-3Z" />
+      <path d="m9 12 2 2 4-5" />
     </svg>
   );
 }
