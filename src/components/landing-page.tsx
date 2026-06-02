@@ -65,7 +65,7 @@ const statusText = {
 
 const serviceCards = [
   {
-    icon: "GA",
+    icon: "garden",
     title: "Garten & Außenbereich",
     text: "Gepflegte Außenflächen für private Haushalte, Mietobjekte und Gewerbe.",
     items: [
@@ -79,7 +79,7 @@ const serviceCards = [
     ],
   },
   {
-    icon: "RE",
+    icon: "cleaning",
     title: "Reinigung",
     text: "Saubere Treppenhäuser, Fenster und Objekte mit planbarer Ausführung.",
     items: [
@@ -91,7 +91,7 @@ const serviceCards = [
     ],
   },
   {
-    icon: "MO",
+    icon: "tools",
     title: "Montage & Innenausbau",
     text: "Montagearbeiten, Küchenaufbau und Bodenverlegung aus einer Hand.",
     items: [
@@ -103,7 +103,7 @@ const serviceCards = [
     ],
   },
   {
-    icon: "ET",
+    icon: "transport",
     title: "Entrümpelung & Transport",
     text: "Räumen, sortieren und abtransportieren mit Sprinter nach Bedarf.",
     items: [
@@ -352,14 +352,12 @@ export function LandingPage() {
     <div className="min-h-screen bg-[#F4F8FA] text-[#10212E]">
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/90 shadow-sm backdrop-blur-xl">
         <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <a href="#start" className="flex min-w-0 items-center gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-[#0F2A3D] text-sm font-black text-white shadow-sm">
-              KH
-            </span>
-            <span className="min-w-0 text-lg font-extrabold tracking-tight text-[#0F2A3D] sm:text-xl">
-              <span className="sm:hidden">Klickhafen</span>
-              <span className="hidden sm:inline">Klickhafen Lokalservice</span>
-            </span>
+          <a href="#start" aria-label="Klickhafen Lokalservice" className="group flex min-w-0 items-center">
+            <img
+              src="/klickhafen_logo_transparent.png"
+              alt="Klickhafen"
+              className="h-11 w-auto max-w-[168px] object-contain transition duration-200 group-hover:scale-[1.04] group-hover:drop-shadow-[0_8px_16px_rgba(15,42,61,0.18)] sm:h-12 sm:max-w-[220px]"
+            />
           </a>
           <div className="hidden items-center gap-7 text-sm font-bold text-[#0F2A3D] md:flex">
             <a className="transition hover:text-[#18C7B8]" href="#leistungen">
@@ -492,8 +490,8 @@ export function LandingPage() {
                   className="group rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#18C7B8] hover:bg-white hover:shadow-[0_18px_42px_rgba(15,42,61,0.12)]"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-[#0F2A3D] text-sm font-black text-white group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D]">
-                      {card.icon}
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0F2A3D] text-[#18C7B8] transition group-hover:bg-[#18C7B8] group-hover:text-[#0F2A3D]">
+                      <ServiceIcon name={card.icon} />
                     </span>
                     <div>
                       <h3 className="text-2xl font-black tracking-tight text-[#0F2A3D]">
@@ -556,10 +554,10 @@ export function LandingPage() {
                 Berechnen Sie in wenigen Schritten eine unverbindliche Einschätzung. Der genaue
                 Preis wird nach Prüfung Ihrer Angaben bestätigt.
               </p>
-              <p className="mt-5 rounded-md bg-white/10 p-4 text-sm text-[#d5e6ec]">
-                Die Berechnung dient nur zur Orientierung und ersetzt kein individuelles Angebot.
-              </p>
-              <div className="mt-auto grid gap-3 pt-6">
+              <div className="mt-6 grid gap-3">
+                <p className="rounded-md bg-white/10 p-4 text-sm text-[#d5e6ec]">
+                  Die Berechnung dient nur zur Orientierung und ersetzt kein individuelles Angebot.
+                </p>
                 <p className="rounded-md bg-white/10 p-4 text-sm font-bold text-white">
                   Ausgangspunkt für die Entfernung: PLZ 44577 Castrop-Rauxel
                 </p>
@@ -789,14 +787,14 @@ export function LandingPage() {
         </section>
 
         <section id="anfrage" className="bg-white py-14 sm:py-16">
-          <div className="mx-auto grid max-w-7xl gap-7 px-4 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start lg:px-8">
-            <div>
+          <div className="mx-auto grid max-w-7xl items-stretch gap-7 px-4 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
+            <div className="flex h-full flex-col">
               <SectionIntro
                 eyebrow="Kontakt"
                 title="Individuelle Anfrage stellen"
                 text="Schreiben Sie kurz, wobei Sie Unterstützung benötigen. Bilder oder Videos helfen bei der schnellen Einschätzung."
               />
-              <div className="mt-7 rounded-lg border border-[#dbe7ec] bg-[#0F2A3D] p-6 text-white shadow-[0_22px_55px_rgba(15,42,61,0.2)]">
+              <div className="mt-7 flex flex-1 flex-col rounded-lg border border-[#dbe7ec] bg-[#0F2A3D] p-6 text-white shadow-[0_22px_55px_rgba(15,42,61,0.2)]">
                 <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
                   Direkter Kontakt
                 </p>
@@ -814,6 +812,9 @@ export function LandingPage() {
                   <p>
                     Einsatzgebiet: Castrop-Rauxel, Dortmund, Herne, Bochum und Umgebung rund um
                     44577 Castrop-Rauxel.
+                  </p>
+                  <p className="rounded-md bg-white/10 p-4 font-bold text-white">
+                    Ausgangspunkt für Entfernung und Anfahrt: PLZ 44577 Castrop-Rauxel.
                   </p>
                 </div>
               </div>
@@ -962,6 +963,64 @@ function SectionIntro({
       </h2>
       <p className="mt-4 text-lg leading-8 text-[#64748B]">{text}</p>
     </div>
+  );
+}
+
+function ServiceIcon({ name }: { name: string }) {
+  const common = {
+    width: 28,
+    height: 28,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  if (name === "garden") {
+    return (
+      <svg {...common}>
+        <path d="M5 19c7.5 0 13-5.5 13-13v-1h-1C9.5 5 4 10.5 4 18v1h1Z" />
+        <path d="M4 19c3.8-5.2 7.3-8.4 13-12" />
+        <path d="M8 15c-.6-2.6-2.1-4.3-4-5" />
+      </svg>
+    );
+  }
+
+  if (name === "cleaning") {
+    return (
+      <svg {...common}>
+        <path d="M7 20h10" />
+        <path d="M9 20V9l6-3v14" />
+        <path d="M6 9h12" />
+        <path d="M18 4l1-2" />
+        <path d="M20 7l2-1" />
+        <path d="M4 7 2 6" />
+      </svg>
+    );
+  }
+
+  if (name === "tools") {
+    return (
+      <svg {...common}>
+        <path d="m14.5 6.5 3-3 3 3-3 3" />
+        <path d="m2.5 21.5 8.5-8.5" />
+        <path d="m8 6 10 10" />
+        <path d="m14 20 2-2 2 2 2-2-2-2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M3 8h11v10H3z" />
+      <path d="M14 11h4l3 3v4h-7z" />
+      <path d="M7 18.5a1.5 1.5 0 1 0 0 .1" />
+      <path d="M18 18.5a1.5 1.5 0 1 0 0 .1" />
+      <path d="M6 11h5" />
+    </svg>
   );
 }
 
