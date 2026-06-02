@@ -247,8 +247,8 @@ export function LandingPage() {
       </header>
 
       <main id="start">
-        <section className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
-          <div className="flex flex-col justify-center">
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+          <div className="flex max-w-4xl flex-col justify-center">
             <p className="mb-4 w-fit rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0F2A3D] shadow-sm">
               Castrop-Rauxel · Dortmund · Herne · Bochum
             </p>
@@ -278,39 +278,6 @@ export function LandingPage() {
               Anfrage mit Bildern senden · Preis einschätzen · Angebot erhalten · Termin
               vereinbaren
             </p>
-          </div>
-
-          <div className="relative rounded-lg border border-[#d7e6ec] bg-white p-5 shadow-xl">
-            <div className="rounded-md bg-[#0F2A3D] p-5 text-white">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-[#b8d5df]">Neue Anfrage</p>
-                <span className="rounded-full bg-[#18C7B8] px-3 py-1 text-xs font-bold text-[#0F2A3D]">
-                  eingegangen
-                </span>
-              </div>
-              <p className="mt-4 text-2xl font-bold">Gartenpflege / Reinigung / Montage</p>
-              <p className="mt-2 text-sm leading-6 text-[#d8e8ed]">
-                Schnell bewerten, Bilder prüfen und ein transparentes Angebot vorbereiten.
-              </p>
-            </div>
-            <div className="mt-5 grid gap-3">
-              {["Bilder erhalten", "Preis einschätzen", "Angebot vorbereiten"].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center justify-between rounded-md border border-[#e4edf1] bg-[#F4F8FA] px-4 py-3"
-                >
-                  <span className="font-semibold text-[#0F2A3D]">{item}</span>
-                  <span className="h-3 w-3 rounded-full bg-[#18C7B8]" />
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 grid grid-cols-3 gap-3 text-center text-sm">
-              {["45 € brutto", "Festpreis", "Bilder"].map((item) => (
-                <div key={item} className="rounded-md bg-white p-3 shadow-sm ring-1 ring-[#e4edf1]">
-                  <p className="font-bold text-[#0F2A3D]">{item}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
