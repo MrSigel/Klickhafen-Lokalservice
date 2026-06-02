@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const storageKey = "whatsapp_widget_seen";
@@ -11,7 +12,9 @@ const prefilledText =
 
 export function WhatsAppWidget() {
   const [showBubble, setShowBubble] = useState(false);
+  const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const isAdminRoute = pathname?.startsWith("/admin");
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "4915563535989";
   const whatsappUrl = useMemo(
     () => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(prefilledText)}`,
@@ -19,8 +22,16 @@ export function WhatsAppWidget() {
   );
 
   useEffect(() => {
+    if (isAdminRoute) {
+      return;
+    }
+
     setShowBubble(localStorage.getItem(storageKey) !== "true");
-  }, []);
+  }, [isAdminRoute]);
+
+  if (isAdminRoute) {
+    return null;
+  }
 
   function hideBubble() {
     localStorage.setItem(storageKey, "true");

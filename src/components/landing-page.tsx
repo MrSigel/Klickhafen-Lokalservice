@@ -86,6 +86,13 @@ const statusText = {
   success: "Vielen Dank. Wir prüfen Ihre Anfrage und melden uns mit einem passenden Angebot.",
 };
 
+const calculatorStatusText = {
+  idle: "",
+  loading: "Kostenrechner-Anfrage wird gesendet...",
+  success:
+    "Vielen Dank. Ihre Anfrage wurde über den Kostenrechner gesendet. Wir prüfen Ihre Angaben und melden uns mit einem individuellen Angebot.",
+};
+
 const serviceCards = [
   {
     icon: "garden",
@@ -315,6 +322,13 @@ export function LandingPage() {
   const [error, setError] = useState("");
   const [formFallback, setFormFallback] = useState<FormFallback | null>(null);
   const [fileError, setFileError] = useState("");
+  const [calculatorForm, setCalculatorForm] = useState<FormState>(emptyForm);
+  const [calculatorFiles, setCalculatorFiles] = useState<File[]>([]);
+  const [calculatorSubmitState, setCalculatorSubmitState] =
+    useState<keyof typeof calculatorStatusText>("idle");
+  const [calculatorError, setCalculatorError] = useState("");
+  const [calculatorFallback, setCalculatorFallback] = useState<FormFallback | null>(null);
+  const [calculatorFileError, setCalculatorFileError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const reduceMotion = useReducedMotion();
   const buttonMotion = reduceMotion
@@ -428,31 +442,12 @@ export function LandingPage() {
     setSelectedDistance("Bis 10 km");
   }
 
-  function applyEstimate() {
-    const summary = [
-      "Unverbindliche Einschätzung aus dem Kostenrechner:",
-      `Kategorie: ${selectedService}`,
-      selectedExtras.length ? `Zusatzarbeiten: ${selectedExtras.join(", ")}` : "",
-      selectedService === "Notfallservice" ? `Aufwand: ${estimate.effortText}` : `Aufwand: ${estimate.effort}`,
-      `Entfernung: ${selectedDistance}`,
-      `Preisschätzung: ${estimate.range}`,
-      selectedService !== "Notfallservice" ? `Festpreis-Vorschlag: ${estimate.fixed}` : "",
-      estimate.travelNote,
-      "Ich wünsche ein individuelles Angebot.",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    setForm((current) => ({
-      ...current,
-      description: current.description ? `${current.description}\n\n${summary}` : summary,
-    }));
-
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   function updateForm<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateCalculatorForm<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setCalculatorForm((current) => ({ ...current, [key]: value }));
   }
 
   function updateFiles(selectedFiles: FileList | null) {
@@ -478,6 +473,58 @@ export function LandingPage() {
     setFiles(nextFiles);
   }
 
+  function updateCalculatorFiles(selectedFiles: FileList | null) {
+    setCalculatorFileError("");
+    const nextFiles = Array.from(selectedFiles ?? []);
+
+    if (nextFiles.length > 5) {
+      setCalculatorFiles([]);
+      setCalculatorFileError("Bitte maximal 5 Dateien hochladen.");
+      return;
+    }
+
+    const invalid = nextFiles.find(
+      (file) => !file.type.startsWith("image/") && !file.type.startsWith("video/"),
+    );
+
+    if (invalid) {
+      setCalculatorFiles([]);
+      setCalculatorFileError("Bitte nur Bilder oder Videos hochladen.");
+      return;
+    }
+
+    setCalculatorFiles(nextFiles);
+  }
+
+  function calculatorPayload() {
+    return {
+      category: estimate.category,
+      extras: selectedExtras,
+      effort: selectedService === "Notfallservice" ? estimate.effortText : estimate.effort,
+      distance: estimate.distance,
+      priceEstimate: estimate.range,
+      fixedPrice: selectedService === "Notfallservice" ? null : estimate.fixed,
+      travelNote: estimate.travelNote,
+      offerNotice: estimate.offerNotice,
+      noOrderNotice: estimate.noOrderNotice,
+      materialNotice: estimate.materialNotice,
+      extraNotice: estimate.extraNotice,
+      isEmergency: selectedService === "Notfallservice",
+    };
+  }
+
+  function appendCalculatorFields(data: FormData) {
+    const payload = calculatorPayload();
+
+    data.append("serviceCategory", selectedService);
+    data.append("selectedServices", JSON.stringify(selectedExtras));
+    data.append("effortSize", selectedService === "Notfallservice" ? payload.effort : selectedEffort);
+    data.append("distanceZone", selectedDistance);
+    data.append("estimatedPrice", estimate.range);
+    data.append("fixedPriceSuggestion", selectedService === "Notfallservice" ? "" : estimate.fixed);
+    data.append("calculatorData", JSON.stringify(payload));
+  }
+
   async function submitRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -500,28 +547,13 @@ export function LandingPage() {
 
     setSubmitState("loading");
     const data = new FormData();
+    data.append("requestSource", "contact_form");
     data.append("salutation", form.salutation);
     data.append("firstName", form.firstName);
     data.append("lastName", form.lastName);
     data.append("phone", form.phone);
     data.append("email", form.email);
     data.append("description", form.description);
-    data.append(
-      "calculatorData",
-      JSON.stringify({
-        category: estimate.category,
-        extras: selectedExtras,
-        effort: estimate.effort,
-        distance: estimate.distance,
-        priceEstimate: estimate.range,
-        fixedPrice: selectedService === "Notfallservice" ? null : estimate.fixed,
-        travelNote: estimate.travelNote,
-        offerNotice: estimate.offerNotice,
-        materialNotice: estimate.materialNotice,
-        extraNotice: estimate.extraNotice,
-        isEmergency: selectedService === "Notfallservice",
-      }),
-    );
     files.forEach((file) => data.append("files", file));
 
     const response = await fetch("/api/requests", {
@@ -556,6 +588,85 @@ export function LandingPage() {
     setSubmitState("success");
     setForm(emptyForm);
     setFiles([]);
+  }
+
+  async function submitCalculatorRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCalculatorError("");
+    setCalculatorFallback(null);
+
+    if (
+      !calculatorForm.firstName.trim() ||
+      !calculatorForm.lastName.trim() ||
+      !calculatorForm.email.trim()
+    ) {
+      setCalculatorError("Bitte füllen Sie Vorname, Name und E-Mail aus.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(calculatorForm.email)) {
+      setCalculatorError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+      return;
+    }
+
+    if (calculatorFiles.length > 5 || calculatorFileError) {
+      setCalculatorError(calculatorFileError || "Bitte maximal 5 Dateien hochladen.");
+      return;
+    }
+
+    setCalculatorSubmitState("loading");
+    const data = new FormData();
+    data.append("requestSource", "cost_calculator");
+    data.append("salutation", calculatorForm.salutation);
+    data.append("firstName", calculatorForm.firstName);
+    data.append("lastName", calculatorForm.lastName);
+    data.append("phone", calculatorForm.phone);
+    data.append("email", calculatorForm.email);
+    data.append("description", calculatorForm.description);
+    appendCalculatorFields(data);
+    calculatorFiles.forEach((file) => data.append("files", file));
+
+    try {
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        body: data,
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string; code?: string }
+        | null;
+
+      if (!response.ok) {
+        setCalculatorSubmitState("idle");
+        if (result?.code === "upload_failed") {
+          setCalculatorFallback({
+            title: "Der Datei-Upload konnte nicht abgeschlossen werden.",
+            text:
+              "Bitte versuchen Sie es erneut oder senden Sie uns die Bilder direkt per WhatsApp.",
+            whatsappLabel: "Bilder per WhatsApp senden",
+            whatsappText:
+              "Hallo, ich möchte Bilder zu meiner Kostenrechner-Anfrage senden. Mein Anliegen:",
+          });
+        } else {
+          setCalculatorFallback({
+            title: "Aktuell gibt es Schwierigkeiten mit unserem Formular.",
+            text:
+              "Unsere Techniker arbeiten bereits daran. Bitte kontaktieren Sie uns direkt telefonisch, per WhatsApp oder per E-Mail.",
+          });
+        }
+        return;
+      }
+
+      setCalculatorSubmitState("success");
+      setCalculatorForm(emptyForm);
+      setCalculatorFiles([]);
+    } catch {
+      setCalculatorSubmitState("idle");
+      setCalculatorFallback({
+        title: "Aktuell gibt es Schwierigkeiten mit unserem Formular.",
+        text:
+          "Unsere Techniker arbeiten bereits daran. Bitte kontaktieren Sie uns direkt telefonisch, per WhatsApp oder per E-Mail.",
+      });
+    }
   }
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "4915563535989";
@@ -1061,14 +1172,130 @@ export function LandingPage() {
                       {estimate.extraNotice}
                     </p>
                   ) : null}
-                  <motion.button
-                    type="button"
-                    onClick={applyEstimate}
-                    className="mt-5 w-full rounded-md bg-[#18C7B8] px-6 py-4 text-base font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.24)] transition hover:bg-[#15b6a8]"
-                    {...buttonMotion}
-                  >
-                    Mit dieser Einschätzung anfragen
-                  </motion.button>
+                  <form onSubmit={submitCalculatorRequest} className="mt-5 grid gap-4 rounded-md bg-white p-4 ring-1 ring-[#dbe7ec]">
+                    <div>
+                      <p className="text-lg font-black text-[#0F2A3D]">
+                        Anfrage direkt absenden
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-[#64748B]">
+                        Ihre Auswahl und Preisschätzung werden automatisch mitgesendet.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-[0.7fr_1fr_1fr]">
+                      <Field label="Anrede">
+                        <select
+                          value={calculatorForm.salutation}
+                          onChange={(event) =>
+                            updateCalculatorForm("salutation", event.target.value)
+                          }
+                          className="input"
+                        >
+                          {["Herr", "Frau", "Divers"].map((salutation) => (
+                            <option key={salutation} value={salutation}>
+                              {salutation}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label="Vorname" required>
+                        <input
+                          value={calculatorForm.firstName}
+                          onChange={(event) =>
+                            updateCalculatorForm("firstName", event.target.value)
+                          }
+                          className="input"
+                          required
+                        />
+                      </Field>
+                      <Field label="Name" required>
+                        <input
+                          value={calculatorForm.lastName}
+                          onChange={(event) =>
+                            updateCalculatorForm("lastName", event.target.value)
+                          }
+                          className="input"
+                          required
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label="Telefonnummer">
+                        <input
+                          value={calculatorForm.phone}
+                          onChange={(event) => updateCalculatorForm("phone", event.target.value)}
+                          className="input"
+                        />
+                      </Field>
+                      <Field label="E-Mail-Adresse" required>
+                        <input
+                          type="email"
+                          value={calculatorForm.email}
+                          onChange={(event) => updateCalculatorForm("email", event.target.value)}
+                          className="input"
+                          required
+                        />
+                      </Field>
+                    </div>
+
+                    <Field label="Beschreibung / Zusatzhinweis">
+                      <textarea
+                        value={calculatorForm.description}
+                        onChange={(event) =>
+                          updateCalculatorForm("description", event.target.value)
+                        }
+                        className="input min-h-24"
+                        placeholder="Ergänzen Sie besondere Hinweise, Terminwünsche oder wichtige Details."
+                      />
+                    </Field>
+
+                    <Field label="Bilder oder Videos hochladen">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,video/*"
+                        onChange={(event) => updateCalculatorFiles(event.target.files)}
+                        className="block w-full rounded-md border border-dashed border-[#9fc5cf] bg-[#F4F8FA] px-4 py-4 text-sm font-medium text-[#425466]"
+                      />
+                      <span className="text-xs font-medium text-[#64748B]">
+                        Maximal 5 Dateien, nur Bilder oder Videos.
+                      </span>
+                    </Field>
+
+                    {calculatorFileError ? (
+                      <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+                        {calculatorFileError}
+                      </p>
+                    ) : null}
+                    {calculatorError ? (
+                      <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+                        {calculatorError}
+                      </p>
+                    ) : null}
+                    {calculatorFallback ? (
+                      <ContactFallback
+                        title={calculatorFallback.title}
+                        text={calculatorFallback.text}
+                        whatsappLabel={calculatorFallback.whatsappLabel}
+                        whatsappText={calculatorFallback.whatsappText}
+                      />
+                    ) : null}
+                    {calculatorSubmitState !== "idle" ? (
+                      <p className="rounded-md bg-[#F4F8FA] p-3 text-sm font-bold text-[#0F2A3D]">
+                        {calculatorStatusText[calculatorSubmitState]}
+                      </p>
+                    ) : null}
+
+                    <motion.button
+                      type="submit"
+                      disabled={calculatorSubmitState === "loading"}
+                      className="w-full rounded-md bg-[#18C7B8] px-6 py-4 text-base font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.24)] transition hover:bg-[#15b6a8]"
+                      {...buttonMotion}
+                    >
+                      Kostenrechner-Anfrage absenden
+                    </motion.button>
+                  </form>
                 </div>
               ) : null}
 

@@ -12,9 +12,23 @@ function cleanFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120);
 }
 
+function parseJsonValue(raw: string, fallback: unknown) {
+  if (!raw) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
+    const requestSource =
+      value(formData, "requestSource") === "cost_calculator" ? "cost_calculator" : "contact_form";
     const salutation = value(formData, "salutation");
     const firstName = value(formData, "firstName");
     const lastName = value(formData, "lastName");
@@ -54,21 +68,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const calculatorDataRaw = value(formData, "calculatorData");
-    const calculatorData = calculatorDataRaw ? JSON.parse(calculatorDataRaw) : null;
+    const calculatorData = parseJsonValue(value(formData, "calculatorData"), null);
+    const selectedServices = parseJsonValue(value(formData, "selectedServices"), []);
+    const serviceCategory = value(formData, "serviceCategory");
+    const effortSize = value(formData, "effortSize");
+    const distanceZone = value(formData, "distanceZone");
+    const estimatedPrice = value(formData, "estimatedPrice");
+    const fixedPriceSuggestion = value(formData, "fixedPriceSuggestion");
     const supabase = getSupabaseAdmin();
     const fullName = `${firstName} ${lastName}`.trim();
 
     const { data: serviceRequest, error: insertError } = await supabase
       .from("service_requests")
       .insert({
+        request_source: requestSource,
         salutation: salutation || null,
         first_name: firstName,
         last_name: lastName,
         name: fullName,
         phone,
         email,
-        service_type: "Kontaktanfrage",
+        service_type:
+          serviceCategory || (requestSource === "cost_calculator" ? "Kostenrechner" : "Kontaktanfrage"),
+        service_category: serviceCategory || null,
+        selected_services: selectedServices,
+        effort_size: effortSize || null,
+        distance_zone: distanceZone || null,
+        estimated_price: estimatedPrice || null,
+        fixed_price_suggestion: fixedPriceSuggestion || null,
         description: value(formData, "description") || null,
         calculator_data: calculatorData,
       })

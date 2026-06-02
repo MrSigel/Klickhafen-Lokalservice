@@ -6,6 +6,7 @@ export type Database = {
       service_requests: {
         Row: {
           id: string;
+          request_source: string | null;
           salutation: string | null;
           first_name: string | null;
           last_name: string | null;
@@ -14,16 +15,22 @@ export type Database = {
           email: string | null;
           location: string | null;
           service_type: string;
+          service_category: string | null;
+          selected_services: Json | null;
+          effort_size: string | null;
+          distance_zone: string | null;
           description: string | null;
           desired_date: string | null;
           price_type: string | null;
           estimated_price: string | null;
+          fixed_price_suggestion: string | null;
           calculator_data: Json | null;
           status: string | null;
           created_at: string | null;
         };
         Insert: {
           id?: string;
+          request_source?: string | null;
           salutation?: string | null;
           first_name?: string | null;
           last_name?: string | null;
@@ -32,15 +39,21 @@ export type Database = {
           email?: string | null;
           location?: string | null;
           service_type: string;
+          service_category?: string | null;
+          selected_services?: Json | null;
+          effort_size?: string | null;
+          distance_zone?: string | null;
           description?: string | null;
           desired_date?: string | null;
           price_type?: string | null;
           estimated_price?: string | null;
+          fixed_price_suggestion?: string | null;
           calculator_data?: Json | null;
           status?: string | null;
           created_at?: string | null;
         };
         Update: {
+          request_source?: string | null;
           salutation?: string | null;
           first_name?: string | null;
           last_name?: string | null;
@@ -49,10 +62,15 @@ export type Database = {
           email?: string | null;
           location?: string | null;
           service_type?: string;
+          service_category?: string | null;
+          selected_services?: Json | null;
+          effort_size?: string | null;
+          distance_zone?: string | null;
           description?: string | null;
           desired_date?: string | null;
           price_type?: string | null;
           estimated_price?: string | null;
+          fixed_price_suggestion?: string | null;
           calculator_data?: Json | null;
           status?: string | null;
         };
