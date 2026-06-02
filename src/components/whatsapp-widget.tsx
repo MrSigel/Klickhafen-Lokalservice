@@ -68,25 +68,18 @@ export function WhatsAppWidget() {
         target="_blank"
         rel="noreferrer"
         onClick={hideBubble}
-        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#18C7B8] text-[#0F2A3D] shadow-[0_16px_36px_rgba(15,42,61,0.24)] transition hover:bg-[#15b6a8] sm:h-auto sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-4"
+        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_16px_36px_rgba(37,211,102,0.34)] transition hover:bg-[#1EBE5D] sm:h-auto sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-4"
         aria-label="WhatsApp öffnen"
         {...(reduceMotion ? {} : { whileHover: { scale: 1.04 }, whileTap: { scale: 0.96 } })}
       >
         <svg
-          width="25"
-          height="25"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          width="27"
+          height="27"
+          viewBox="0 0 32 32"
+          fill="currentColor"
           aria-hidden="true"
         >
-          <path d="M21 11.5a8.4 8.4 0 0 1-12.6 7.3L3 20l1.5-5A8.4 8.4 0 1 1 21 11.5Z" />
-          <path d="M8.8 9.1c.2 3 2.5 5.2 5.4 6" />
-          <path d="m8.9 9 .9-.9 1.4 1.4-.7 1" />
-          <path d="m14.2 15.1 1-.7 1.4 1.4-.9.9" />
+          <path d="M16.01 3.2C9.03 3.2 3.35 8.79 3.35 15.66c0 2.2.59 4.35 1.71 6.23L3.2 28.8l7.13-1.84a12.8 12.8 0 0 0 5.68 1.34c6.98 0 12.66-5.59 12.66-12.46S22.99 3.2 16.01 3.2Zm0 22.97c-1.88 0-3.72-.5-5.33-1.46l-.38-.23-4.24 1.1 1.13-4.09-.26-.42a10.12 10.12 0 0 1-1.56-5.41c0-5.7 4.78-10.33 10.65-10.33 5.86 0 10.64 4.63 10.64 10.33s-4.78 10.51-10.65 10.51Zm5.84-7.72c-.32-.16-1.9-.92-2.2-1.03-.29-.11-.5-.16-.72.16-.21.31-.82 1.03-1.01 1.24-.19.21-.37.24-.69.08-.32-.16-1.35-.49-2.58-1.56-.95-.84-1.6-1.87-1.78-2.19-.19-.31-.02-.48.14-.64.15-.14.32-.37.48-.55.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.72-1.7-.98-2.33-.26-.61-.52-.53-.72-.54h-.61c-.21 0-.56.08-.85.4-.29.31-1.12 1.08-1.12 2.63 0 1.55 1.15 3.05 1.31 3.26.16.21 2.27 3.41 5.49 4.78.77.33 1.37.53 1.83.68.77.24 1.47.21 2.03.13.62-.09 1.9-.76 2.17-1.5.27-.74.27-1.37.19-1.5-.08-.13-.29-.21-.61-.37Z" />
         </svg>
         <span className="hidden text-sm font-black sm:inline">WhatsApp</span>
       </motion.a>
