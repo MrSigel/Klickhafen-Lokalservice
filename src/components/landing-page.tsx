@@ -1000,7 +1000,6 @@ export function LandingPage() {
                 alt="Klickhafen"
                 className="h-12 w-auto max-w-[220px] object-contain brightness-0 invert"
               />
-              <p className="mt-4 text-xl font-black">Klickhafen Lokalservice</p>
               <p className="mt-3 max-w-sm text-sm leading-6 text-[#d5e6ec]">
                 Haus, Garten & Objektservice rund um Castrop-Rauxel.
               </p>
