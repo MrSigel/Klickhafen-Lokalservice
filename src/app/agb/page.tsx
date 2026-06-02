@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "AGB und Angebotsbedingungen | Klickhafen Lokalservice",
+  title: "AGB und Angebotsbedingungen",
   description: "Angebotsbedingungen von Klickhafen Lokalservice.",
+  alternates: {
+    canonical: "/agb",
+  },
 };
 
 const terms = [

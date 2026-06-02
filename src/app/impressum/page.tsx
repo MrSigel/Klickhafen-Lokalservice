@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "Impressum | Klickhafen Lokalservice",
+  title: "Impressum",
   description: "Impressum von Klickhafen Lokalservice.",
+  alternates: {
+    canonical: "/impressum",
+  },
 };
 
 const details = {
