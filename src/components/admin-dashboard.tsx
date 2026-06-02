@@ -8,10 +8,14 @@ type RequestImage = {
   id: string;
   file_url: string;
   file_name: string | null;
+  file_type: string | null;
 };
 
 type ServiceRequest = {
   id: string;
+  salutation: string | null;
+  first_name: string | null;
+  last_name: string | null;
   name: string;
   phone: string;
   email: string | null;
@@ -26,6 +30,14 @@ type ServiceRequest = {
   created_at: string;
   request_images: RequestImage[];
 };
+
+function displayName(request: ServiceRequest) {
+  const composed = [request.salutation, request.first_name, request.last_name]
+    .filter(Boolean)
+    .join(" ");
+
+  return composed || request.name;
+}
 
 export function AdminDashboard() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -79,7 +91,7 @@ export function AdminDashboard() {
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold text-[#0F2A3D]">Anfragen</h1>
-          <p className="text-[#64748B]">Neue Kontakte, Bilder und Preisschätzungen prüfen.</p>
+          <p className="text-[#64748B]">Kontaktanfragen, Dateien und Status prüfen.</p>
         </div>
         <p className="rounded-md bg-white px-4 py-2 text-sm font-bold text-[#0F2A3D] ring-1 ring-[#dbe7ec]">
           {requests.length} Einträge
@@ -104,8 +116,8 @@ export function AdminDashboard() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-bold text-[#0F2A3D]">{request.name}</p>
-                  <p className="text-sm text-[#64748B]">{request.service_type}</p>
+                  <p className="font-bold text-[#0F2A3D]">{displayName(request)}</p>
+                  <p className="text-sm text-[#64748B]">{request.email ?? "Keine E-Mail"}</p>
                 </div>
                 <span className="rounded-full bg-[#e7fbf8] px-3 py-1 text-xs font-bold text-[#0F2A3D]">
                   {request.status}
@@ -125,8 +137,8 @@ export function AdminDashboard() {
           <article className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-[#dbe7ec]">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-2xl font-extrabold text-[#0F2A3D]">{selected.name}</h2>
-                <p className="text-[#64748B]">{selected.service_type}</p>
+                <h2 className="text-2xl font-extrabold text-[#0F2A3D]">{displayName(selected)}</h2>
+                <p className="text-[#64748B]">Kontaktanfrage</p>
               </div>
               <select
                 value={selected.status}
@@ -142,12 +154,12 @@ export function AdminDashboard() {
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <Info label="Telefon" value={selected.phone} />
+              <Info label="Anrede" value={selected.salutation ?? "-"} />
+              <Info label="Vorname" value={selected.first_name ?? "-"} />
+              <Info label="Name" value={selected.last_name ?? selected.name ?? "-"} />
+              <Info label="Telefon" value={selected.phone || "-"} />
               <Info label="E-Mail" value={selected.email ?? "-"} />
-              <Info label="Adresse / Ort" value={selected.location ?? "-"} />
-              <Info label="Wunschtermin" value={selected.desired_date ?? "-"} />
-              <Info label="Preisart" value={selected.price_type ?? "-"} />
-              <Info label="Preisschätzung" value={selected.estimated_price ?? "-"} />
+              <Info label="Erstellt" value={new Date(selected.created_at).toLocaleString("de-DE")} />
             </div>
 
             <div className="mt-6">
@@ -157,31 +169,41 @@ export function AdminDashboard() {
               </p>
             </div>
 
-            <div className="mt-6">
-              <p className="text-sm font-bold text-[#0F2A3D]">calculator_data</p>
-              <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-[#0F2A3D] p-4 text-xs text-white">
-                {JSON.stringify(selected.calculator_data, null, 2)}
-              </pre>
-            </div>
+            {selected.calculator_data ? (
+              <div className="mt-6">
+                <p className="text-sm font-bold text-[#0F2A3D]">Kostenrechner-Daten</p>
+                <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-[#0F2A3D] p-4 text-xs text-white">
+                  {JSON.stringify(selected.calculator_data, null, 2)}
+                </pre>
+              </div>
+            ) : null}
 
             <div className="mt-6">
-              <p className="text-sm font-bold text-[#0F2A3D]">Bilder</p>
+              <p className="text-sm font-bold text-[#0F2A3D]">Dateien</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {selected.request_images?.map((image) => (
-                  <a key={image.id} href={image.file_url} target="_blank" rel="noreferrer">
-                    <img
-                      src={image.file_url}
-                      alt={image.file_name ?? "Anfragebild"}
-                      className="aspect-video w-full rounded-md object-cover ring-1 ring-[#dbe7ec]"
-                    />
+                {selected.request_images?.map((file) => (
+                  <a key={file.id} href={file.file_url} target="_blank" rel="noreferrer">
+                    {file.file_type?.startsWith("video/") ? (
+                      <video
+                        src={file.file_url}
+                        controls
+                        className="aspect-video w-full rounded-md object-cover ring-1 ring-[#dbe7ec]"
+                      />
+                    ) : (
+                      <img
+                        src={file.file_url}
+                        alt={file.file_name ?? "Anfragedatei"}
+                        className="aspect-video w-full rounded-md object-cover ring-1 ring-[#dbe7ec]"
+                      />
+                    )}
                     <span className="mt-1 block truncate text-xs text-[#64748B]">
-                      {image.file_name}
+                      {file.file_name}
                     </span>
                   </a>
                 ))}
                 {selected.request_images?.length === 0 ? (
                   <p className="rounded-md bg-[#F4F8FA] p-4 text-sm text-[#64748B]">
-                    Keine Bilder hochgeladen.
+                    Keine Dateien hochgeladen.
                   </p>
                 ) : null}
               </div>

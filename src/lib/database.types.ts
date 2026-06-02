@@ -6,6 +6,9 @@ export type Database = {
       service_requests: {
         Row: {
           id: string;
+          salutation: string | null;
+          first_name: string | null;
+          last_name: string | null;
           name: string;
           phone: string;
           email: string | null;
@@ -21,6 +24,9 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          salutation?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
           name: string;
           phone: string;
           email?: string | null;
@@ -35,6 +41,9 @@ export type Database = {
           created_at?: string | null;
         };
         Update: {
+          salutation?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
           name?: string;
           phone?: string;
           email?: string | null;
@@ -55,6 +64,7 @@ export type Database = {
           request_id: string | null;
           file_url: string;
           file_name: string | null;
+          file_type: string | null;
           created_at: string | null;
         };
         Insert: {
@@ -62,12 +72,14 @@ export type Database = {
           request_id?: string | null;
           file_url: string;
           file_name?: string | null;
+          file_type?: string | null;
           created_at?: string | null;
         };
         Update: {
           request_id?: string | null;
           file_url?: string;
           file_name?: string | null;
+          file_type?: string | null;
           created_at?: string | null;
         };
         Relationships: [];

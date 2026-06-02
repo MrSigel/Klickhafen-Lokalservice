@@ -15,13 +15,41 @@ function cleanFileName(fileName: string) {
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const name = value(formData, "name");
+    const salutation = value(formData, "salutation");
+    const firstName = value(formData, "firstName");
+    const lastName = value(formData, "lastName");
     const phone = value(formData, "phone");
-    const serviceType = value(formData, "serviceType");
+    const email = value(formData, "email");
 
-    if (!name || !phone || !serviceType) {
+    if (!firstName || !lastName || !email) {
       return NextResponse.json(
-        { error: "Name, Telefon und gewünschte Leistung sind Pflichtfelder." },
+        { error: "Vorname, Name und E-Mail sind Pflichtfelder." },
+        { status: 400 },
+      );
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Die E-Mail-Adresse ist ungültig." }, { status: 400 });
+    }
+
+    const files = [...formData.getAll("files"), ...formData.getAll("images")].filter(
+      (file): file is File => file instanceof File && file.size > 0,
+    );
+
+    if (files.length > 5) {
+      return NextResponse.json(
+        { error: "Bitte maximal 5 Dateien hochladen." },
+        { status: 400 },
+      );
+    }
+
+    const invalidFile = files.find(
+      (file) => !file.type.startsWith("image/") && !file.type.startsWith("video/"),
+    );
+
+    if (invalidFile) {
+      return NextResponse.json(
+        { error: "Bitte nur Bilder oder Videos hochladen." },
         { status: 400 },
       );
     }
@@ -29,19 +57,19 @@ export async function POST(request: Request) {
     const calculatorDataRaw = value(formData, "calculatorData");
     const calculatorData = calculatorDataRaw ? JSON.parse(calculatorDataRaw) : null;
     const supabase = getSupabaseAdmin();
+    const fullName = `${firstName} ${lastName}`.trim();
 
     const { data: serviceRequest, error: insertError } = await supabase
       .from("service_requests")
       .insert({
-        name,
+        salutation: salutation || null,
+        first_name: firstName,
+        last_name: lastName,
+        name: fullName,
         phone,
-        email: value(formData, "email") || null,
-        location: value(formData, "location") || null,
-        service_type: serviceType,
+        email,
+        service_type: "Kontaktanfrage",
         description: value(formData, "description") || null,
-        desired_date: value(formData, "desiredDate") || null,
-        price_type: value(formData, "priceType") || null,
-        estimated_price: value(formData, "estimatedPrice") || null,
         calculator_data: calculatorData,
       })
       .select("id")
@@ -50,10 +78,6 @@ export async function POST(request: Request) {
     if (insertError || !serviceRequest) {
       throw insertError ?? new Error("Anfrage konnte nicht gespeichert werden.");
     }
-
-    const files = formData
-      .getAll("images")
-      .filter((file): file is File => file instanceof File && file.size > 0);
 
     if (files.length > 0) {
       const imageRows = [];
@@ -76,6 +100,7 @@ export async function POST(request: Request) {
           request_id: serviceRequest.id,
           file_url: data.publicUrl,
           file_name: file.name,
+          file_type: file.type || "application/octet-stream",
         });
       }
 
@@ -89,9 +114,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "Die Anfrage konnte nicht gesendet werden.";
+      error instanceof Error ? error.message : "Die Anfrage konnte nicht gesendet werden.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }

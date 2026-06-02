@@ -29,7 +29,7 @@ const services = {
     "Laminat verlegen",
     "Klick-Vinyl verlegen",
     "PVC verlegen",
-    "alter Boden entfernen",
+    "alten Boden entfernen",
     "Sockelleisten montieren",
   ],
   Entrümpelung: [
@@ -49,17 +49,13 @@ const effort = {
   Groß: { hours: "7-10 Stunden", min: 7, max: 10 },
 };
 
-const formServiceOptions = [
-  "Gartenarbeiten",
-  "Fensterreinigung",
-  "Gebäudereinigung",
-  "Möbelmontage",
-  "Küchenmontage",
-  "Bodenverlegung",
-  "Entrümpelung",
-  "Objektpflege",
-  "Sonstiges",
-];
+const distances = {
+  "Bis 5 km": { fee: 0, label: "0 €" },
+  "5-15 km": { fee: 15, label: "15 €" },
+  "15-25 km": { fee: 30, label: "30 €" },
+  "25-35 km": { fee: 45, label: "45 €" },
+  "Mehr als 35 km": { fee: null, label: "nach Absprache" },
+};
 
 const statusText = {
   idle: "",
@@ -169,59 +165,63 @@ const careCards = [
 
 type ServiceKey = keyof typeof services;
 type EffortKey = keyof typeof effort;
+type DistanceKey = keyof typeof distances;
 
 type FormState = {
-  name: string;
+  salutation: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   email: string;
-  location: string;
-  serviceType: string;
   description: string;
-  desiredDate: string;
-  priceType: string;
-  estimatedPrice: string;
   accepted: boolean;
 };
 
 const emptyForm: FormState = {
-  name: "",
+  salutation: "Herr",
+  firstName: "",
+  lastName: "",
   phone: "",
   email: "",
-  location: "",
-  serviceType: "",
   description: "",
-  desiredDate: "",
-  priceType: "Noch offen",
-  estimatedPrice: "",
   accepted: false,
 };
 
-function fixedPrice(max: number) {
-  return Math.ceil((max * 45 * 0.86) / 10) * 10 - 1;
+function formatEuro(value: number) {
+  return `${Math.round(value)} €`;
 }
 
 export function LandingPage() {
   const [selectedService, setSelectedService] = useState<ServiceKey>("Gartenarbeiten");
   const [selectedExtras, setSelectedExtras] = useState<string[]>(["Rasen mähen"]);
   const [selectedEffort, setSelectedEffort] = useState<EffortKey>("Mittel");
+  const [selectedDistance, setSelectedDistance] = useState<DistanceKey>("Bis 5 km");
+  const [wizardStep, setWizardStep] = useState(1);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [files, setFiles] = useState<File[]>([]);
   const [submitState, setSubmitState] = useState<keyof typeof statusText>("idle");
   const [error, setError] = useState("");
+  const [fileError, setFileError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const estimate = useMemo(() => {
     const selected = effort[selectedEffort];
-    const range = `ca. ${selected.min * 45}-${selected.max * 45} €`;
-    const fixed = `ab ${fixedPrice(selected.max)} €`;
+    const distance = distances[selectedDistance];
+    const travelFee = distance.fee ?? 0;
+    const min = selected.min * 23.8 + travelFee;
+    const max = selected.max * 23.8 + travelFee;
+    const fixed = max * 0.85;
+    const travelNote =
+      distance.fee === null ? "Anfahrt nach Absprache" : `Anfahrt: ${distance.label}`;
 
     return {
-      range,
-      fixed,
+      range: `ca. ${formatEuro(min)}-${formatEuro(max)}`,
+      fixed: `ab ${formatEuro(fixed)}`,
       effortText: `Aufwand ca. ${selected.hours}`,
-      full: `Geschätzt nach Aufwand: ${range} | Empfohlenes Festpreis-Angebot: ${fixed}`,
+      travelNote,
+      full: `Unverbindliche Schätzung: ca. ${formatEuro(min)}-${formatEuro(max)} | Festpreis-Vorteil: ab ${formatEuro(fixed)} | ${travelNote}`,
     };
-  }, [selectedEffort]);
+  }, [selectedEffort, selectedDistance]);
 
   function toggleExtra(extra: string) {
     setSelectedExtras((current) =>
@@ -236,24 +236,20 @@ export function LandingPage() {
 
   function applyEstimate() {
     const summary = [
-      `Kostenrechner-Auswahl: ${selectedService}`,
+      "Preisschätzung aus dem Kostenrechner:",
+      `Leistung: ${selectedService}`,
       selectedExtras.length ? `Zusatzarbeiten: ${selectedExtras.join(", ")}` : "",
       `Aufwand: ${selectedEffort} (${estimate.effortText})`,
-      estimate.full,
+      `Entfernung: ${selectedDistance}`,
+      `Preisschätzung: ${estimate.range}`,
+      `Festpreis-Schätzung: ${estimate.fixed}`,
+      estimate.travelNote,
     ]
       .filter(Boolean)
       .join("\n");
 
     setForm((current) => ({
       ...current,
-      serviceType:
-        selectedService === "Montage"
-          ? "Möbelmontage"
-          : selectedService === "Reinigung"
-            ? "Gebäudereinigung"
-            : selectedService,
-      priceType: "Festpreis",
-      estimatedPrice: estimate.full,
       description: current.description ? `${current.description}\n\n${summary}` : summary,
     }));
 
@@ -264,41 +260,67 @@ export function LandingPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateFiles(selectedFiles: FileList | null) {
+    setFileError("");
+    const nextFiles = Array.from(selectedFiles ?? []);
+
+    if (nextFiles.length > 5) {
+      setFiles([]);
+      setFileError("Bitte maximal 5 Dateien hochladen.");
+      return;
+    }
+
+    const invalid = nextFiles.find(
+      (file) => !file.type.startsWith("image/") && !file.type.startsWith("video/"),
+    );
+
+    if (invalid) {
+      setFiles([]);
+      setFileError("Bitte nur Bilder oder Videos hochladen.");
+      return;
+    }
+
+    setFiles(nextFiles);
+  }
+
   async function submitRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
-    if (!form.name.trim() || !form.phone.trim() || !form.serviceType || !form.accepted) {
-      setError("Bitte füllen Sie alle Pflichtfelder aus und bestätigen Sie die Angebotsanfrage.");
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.accepted) {
+      setError("Bitte füllen Sie Vorname, Name und E-Mail aus und bestätigen Sie die Kontaktanfrage.");
       return;
     }
 
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       setError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+      return;
+    }
+
+    if (files.length > 5 || fileError) {
+      setError(fileError || "Bitte maximal 5 Dateien hochladen.");
       return;
     }
 
     setSubmitState("loading");
     const data = new FormData();
-    data.append("name", form.name);
+    data.append("salutation", form.salutation);
+    data.append("firstName", form.firstName);
+    data.append("lastName", form.lastName);
     data.append("phone", form.phone);
     data.append("email", form.email);
-    data.append("location", form.location);
-    data.append("serviceType", form.serviceType);
     data.append("description", form.description);
-    data.append("desiredDate", form.desiredDate);
-    data.append("priceType", form.priceType);
-    data.append("estimatedPrice", form.estimatedPrice);
     data.append(
       "calculatorData",
       JSON.stringify({
         service: selectedService,
         extras: selectedExtras,
         effort: selectedEffort,
+        distance: selectedDistance,
         estimate,
       }),
     );
-    files.forEach((file) => data.append("images", file));
+    files.forEach((file) => data.append("files", file));
 
     const response = await fetch("/api/requests", {
       method: "POST",
@@ -318,6 +340,11 @@ export function LandingPage() {
   }
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "4915563535989";
+  const canGoNext =
+    wizardStep === 1 ||
+    wizardStep === 3 ||
+    wizardStep === 4 ||
+    (wizardStep === 2 && selectedExtras.length > 0);
 
   return (
     <div className="min-h-screen bg-[#F4F8FA] text-[#10212E]">
@@ -514,130 +541,176 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="kostenrechner" className="bg-[#0F2A3D] py-18 text-white sm:py-20">
-          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:px-8">
-            <div className="rounded-lg border border-white/10 bg-white/[0.06] p-6">
+        <section id="kostenrechner" className="bg-[#0F2A3D] py-14 text-white sm:py-16">
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:px-8">
+            <div className="rounded-lg border border-white/10 bg-white/[0.06] p-5 sm:p-6">
               <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
                 Kostenrechner
               </p>
               <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-                Preis unverbindlich berechnen
+                Preis grob einschätzen
               </h2>
               <p className="mt-4 leading-7 text-[#d5e6ec]">
-                Wählen Sie Ihre gewünschte Leistung aus und erhalten Sie eine erste
-                Preisschätzung. Der genaue Preis wird nach Prüfung Ihrer Angaben und Bilder
-                bestätigt.
+                Berechnen Sie in wenigen Schritten eine unverbindliche Einschätzung. Der genaue
+                Preis wird nach Prüfung Ihrer Angaben bestätigt.
               </p>
-              <div className="mt-6 grid gap-3">
-                {[
-                  "Stundensatz intern: 45 € brutto",
-                  "Festpreis wirkt günstiger als die obere Aufwandsschätzung",
-                  "Sprinter, Material und Entsorgung separat nach Aufwand",
-                ].map((item) => (
-                  <p key={item} className="rounded-md bg-white/10 p-4 text-sm text-[#d5e6ec]">
-                    <span className="mr-2 text-[#18C7B8]">✓</span>
-                    {item}
-                  </p>
-                ))}
-              </div>
+              <p className="mt-5 rounded-md bg-white/10 p-4 text-sm text-[#d5e6ec]">
+                Die Berechnung dient nur zur Orientierung und ersetzt kein individuelles Angebot.
+              </p>
             </div>
-            <div className="rounded-lg bg-white p-5 text-[#10212E] shadow-[0_28px_70px_rgba(0,0,0,0.22)] sm:p-7">
-              <div className="grid gap-7">
-                <CalculatorBlock number="1" title="Leistung auswählen">
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {(Object.keys(services) as ServiceKey[]).map((service) => (
-                      <button
-                        key={service}
-                        type="button"
-                        onClick={() => changeService(service)}
-                        className={`rounded-md border px-4 py-4 text-left font-extrabold transition ${
-                          selectedService === service
-                            ? "border-[#18C7B8] bg-[#e7fbf8] text-[#0F2A3D] shadow-sm"
-                            : "border-[#dbe7ec] bg-white text-[#425466] hover:border-[#18C7B8]"
-                        }`}
-                      >
-                        {service}
-                      </button>
-                    ))}
-                  </div>
-                </CalculatorBlock>
 
-                <CalculatorBlock number="2" title="Zusatzarbeiten auswählen">
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {services[selectedService].map((extra) => (
-                      <label
-                        key={extra}
-                        className="flex min-h-14 items-center gap-3 rounded-md border border-[#dbe7ec] bg-white px-4 py-3 font-medium transition hover:border-[#18C7B8]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedExtras.includes(extra)}
-                          onChange={() => toggleExtra(extra)}
-                          className="h-4 w-4 accent-[#18C7B8]"
-                        />
-                        <span>{extra}</span>
-                      </label>
-                    ))}
-                  </div>
-                </CalculatorBlock>
+            <div className="rounded-lg bg-white p-5 text-[#10212E] shadow-[0_24px_60px_rgba(0,0,0,0.2)] sm:p-6">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-[#18C7B8]">Schritt {wizardStep} von 5</p>
+                  <h3 className="mt-1 text-2xl font-black text-[#0F2A3D]">
+                    {wizardStep === 1 && "Leistung auswählen"}
+                    {wizardStep === 2 && "Zusatzarbeiten auswählen"}
+                    {wizardStep === 3 && "Aufwand auswählen"}
+                    {wizardStep === 4 && "Entfernung auswählen"}
+                    {wizardStep === 5 && "Ergebnis"}
+                  </h3>
+                </div>
+                <div className="h-2 rounded-full bg-[#e6eef2] sm:w-48">
+                  <div
+                    className="h-2 rounded-full bg-[#18C7B8]"
+                    style={{ width: `${(wizardStep / 5) * 100}%` }}
+                  />
+                </div>
+              </div>
 
-                <CalculatorBlock number="3" title="Aufwand auswählen">
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    {(Object.keys(effort) as EffortKey[]).map((level) => (
-                      <button
-                        key={level}
-                        type="button"
-                        onClick={() => setSelectedEffort(level)}
-                        className={`rounded-md border px-4 py-4 text-left transition ${
-                          selectedEffort === level
-                            ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
-                            : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
-                        }`}
-                      >
-                        <span className="block text-lg font-black text-[#0F2A3D]">{level}</span>
-                        <span className="text-sm font-medium text-[#64748B]">
-                          {effort[level].hours}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </CalculatorBlock>
+              {wizardStep === 1 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(Object.keys(services) as ServiceKey[]).map((service) => (
+                    <button
+                      key={service}
+                      type="button"
+                      onClick={() => changeService(service)}
+                      className={`rounded-md border px-4 py-4 text-left font-extrabold transition ${
+                        selectedService === service
+                          ? "border-[#18C7B8] bg-[#e7fbf8] text-[#0F2A3D] shadow-sm"
+                          : "border-[#dbe7ec] bg-white text-[#425466] hover:border-[#18C7B8]"
+                      }`}
+                    >
+                      {service}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
 
+              {wizardStep === 2 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {services[selectedService].map((extra) => (
+                    <label
+                      key={extra}
+                      className="flex min-h-14 items-center gap-3 rounded-md border border-[#dbe7ec] bg-white px-4 py-3 font-medium transition hover:border-[#18C7B8]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedExtras.includes(extra)}
+                        onChange={() => toggleExtra(extra)}
+                        className="h-4 w-4 accent-[#18C7B8]"
+                      />
+                      <span>{extra}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+
+              {wizardStep === 3 ? (
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {(Object.keys(effort) as EffortKey[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setSelectedEffort(level)}
+                      className={`rounded-md border px-4 py-4 text-left transition ${
+                        selectedEffort === level
+                          ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
+                          : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
+                      }`}
+                    >
+                      <span className="block text-lg font-black text-[#0F2A3D]">{level}</span>
+                      <span className="text-sm font-medium text-[#64748B]">
+                        {effort[level].hours}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {wizardStep === 4 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(Object.keys(distances) as DistanceKey[]).map((distance) => (
+                    <button
+                      key={distance}
+                      type="button"
+                      onClick={() => setSelectedDistance(distance)}
+                      className={`rounded-md border px-4 py-4 text-left transition ${
+                        selectedDistance === distance
+                          ? "border-[#18C7B8] bg-[#e7fbf8] shadow-sm"
+                          : "border-[#dbe7ec] bg-white hover:border-[#18C7B8]"
+                      }`}
+                    >
+                      <span className="block font-black text-[#0F2A3D]">{distance}</span>
+                      <span className="text-sm font-medium text-[#64748B]">
+                        Anfahrt: {distances[distance].label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {wizardStep === 5 ? (
                 <div className="rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-md bg-[#0F2A3D] text-sm font-black text-white">
-                      4
-                    </span>
-                    <p className="font-black text-[#0F2A3D]">Preisart und Ergebnis</p>
-                  </div>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-md bg-white p-5 ring-1 ring-[#dbe7ec]">
                       <p className="text-sm font-bold text-[#64748B]">
-                        Geschätzter Preis nach Aufwand
+                        Unverbindliche Schätzung
                       </p>
                       <p className="mt-3 text-2xl font-black text-[#0F2A3D]">{estimate.range}</p>
+                      <p className="mt-2 text-sm text-[#64748B]">{estimate.travelNote}</p>
                     </div>
                     <div className="relative rounded-md border border-[#18C7B8] bg-white p-5 shadow-sm">
                       <span className="absolute right-4 top-4 rounded-md bg-[#18C7B8] px-2 py-1 text-xs font-black text-[#0F2A3D]">
                         Empfehlung
                       </span>
                       <p className="pr-28 text-sm font-bold text-[#64748B]">
-                        Günstigeres Festpreis-Angebot
+                        Festpreis-Vorteil
                       </p>
                       <p className="mt-3 text-2xl font-black text-[#0F2A3D]">{estimate.fixed}</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm font-medium text-[#64748B]">
-                    Der genaue Preis wird nach Prüfung Ihrer Bilder und Angaben bestätigt.
+                    Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt.
                   </p>
                   <button
                     type="button"
                     onClick={applyEstimate}
                     className="mt-5 w-full rounded-md bg-[#18C7B8] px-6 py-4 text-base font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.24)] transition hover:bg-[#15b6a8]"
                   >
-                    Preisschätzung übernehmen & Anfrage senden
+                    Mit dieser Einschätzung anfragen
                   </button>
                 </div>
+              ) : null}
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWizardStep((step) => Math.max(1, step - 1))}
+                  disabled={wizardStep === 1}
+                  className="rounded-md border border-[#dbe7ec] bg-white px-5 py-3 font-black text-[#0F2A3D]"
+                >
+                  Zurück
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWizardStep((step) => Math.min(5, step + 1))}
+                  disabled={wizardStep === 5 || !canGoNext}
+                  className="ml-auto rounded-md bg-[#0F2A3D] px-5 py-3 font-black text-white"
+                >
+                  Weiter
+                </button>
               </div>
             </div>
           </div>
@@ -696,19 +769,21 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="anfrage" className="bg-white py-18 sm:py-20">
-          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start lg:px-8">
+        <section id="anfrage" className="bg-white py-14 sm:py-16">
+          <div className="mx-auto grid max-w-7xl gap-7 px-4 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start lg:px-8">
             <div>
               <SectionIntro
-                eyebrow="Anfrage"
-                title="Kostenlose Anfrage stellen"
-                text="Senden Sie Ihre Anfrage am besten direkt mit Bildern. So können Umfang, Material, Entsorgung und Termin schneller eingeschätzt werden."
+                eyebrow="Kontakt"
+                title="Individuelle Anfrage stellen"
+                text="Schreiben Sie kurz, wobei Sie Unterstützung benötigen. Bilder oder Videos helfen bei der schnellen Einschätzung."
               />
-              <div className="mt-8 rounded-lg border border-[#dbe7ec] bg-[#0F2A3D] p-6 text-white shadow-[0_22px_55px_rgba(15,42,61,0.2)]">
+              <div className="mt-7 rounded-lg border border-[#dbe7ec] bg-[#0F2A3D] p-6 text-white shadow-[0_22px_55px_rgba(15,42,61,0.2)]">
                 <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
                   Direkter Kontakt
                 </p>
-                <p className="mt-3 text-2xl font-black">Anfragen mit Bildern beschleunigen das Angebot.</p>
+                <p className="mt-3 text-2xl font-black">
+                  Kurze Anfrage senden, Rückmeldung erhalten.
+                </p>
                 <a
                   href={`https://wa.me/${whatsappNumber}`}
                   className="mt-6 block rounded-md bg-[#18C7B8] px-5 py-4 text-center text-base font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.22)]"
@@ -728,115 +803,84 @@ export function LandingPage() {
             <form
               ref={formRef}
               onSubmit={submitRequest}
-              className="grid gap-5 rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5 shadow-[0_22px_55px_rgba(15,42,61,0.1)] sm:p-7"
+              className="grid gap-4 rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-5 shadow-[0_18px_45px_rgba(15,42,61,0.08)] sm:p-6"
             >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Name" required>
+              <div className="grid gap-4 sm:grid-cols-[0.6fr_1fr_1fr]">
+                <Field label="Anrede">
+                  <select
+                    value={form.salutation}
+                    onChange={(event) => updateForm("salutation", event.target.value)}
+                    className="input"
+                  >
+                    {["Herr", "Frau", "Divers"].map((salutation) => (
+                      <option key={salutation} value={salutation}>
+                        {salutation}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Vorname" required>
                   <input
-                    value={form.name}
-                    onChange={(event) => updateForm("name", event.target.value)}
+                    value={form.firstName}
+                    onChange={(event) => updateForm("firstName", event.target.value)}
                     className="input"
                     required
                   />
                 </Field>
-                <Field label="Telefon" required>
+                <Field label="Name" required>
+                  <input
+                    value={form.lastName}
+                    onChange={(event) => updateForm("lastName", event.target.value)}
+                    className="input"
+                    required
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Telefonnummer">
                   <input
                     value={form.phone}
                     onChange={(event) => updateForm("phone", event.target.value)}
                     className="input"
-                    required
                   />
                 </Field>
-                <Field label="E-Mail">
+                <Field label="E-Mail-Adresse" required>
                   <input
                     type="email"
                     value={form.email}
                     onChange={(event) => updateForm("email", event.target.value)}
                     className="input"
-                  />
-                </Field>
-                <Field label="Adresse / Ort">
-                  <input
-                    value={form.location}
-                    onChange={(event) => updateForm("location", event.target.value)}
-                    className="input"
+                    required
                   />
                 </Field>
               </div>
-
-              <Field label="Gewünschte Leistung" required>
-                <select
-                  value={form.serviceType}
-                  onChange={(event) => updateForm("serviceType", event.target.value)}
-                  className="input"
-                  required
-                >
-                  <option value="">Bitte auswählen</option>
-                  {formServiceOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </Field>
 
               <Field label="Beschreibung">
                 <textarea
                   value={form.description}
                   onChange={(event) => updateForm("description", event.target.value)}
-                  className="input min-h-40"
-                  placeholder="Was soll erledigt werden? Größe, Zugang, Besonderheiten und vorhandene Bilder helfen bei der Einschätzung."
+                  className="input min-h-32"
+                  placeholder="Beschreiben Sie kurz Ihr Anliegen. Sie können zusätzlich Bilder oder Videos hochladen."
                 />
               </Field>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Wunschtermin">
-                  <input
-                    value={form.desiredDate}
-                    onChange={(event) => updateForm("desiredDate", event.target.value)}
-                    className="input"
-                    placeholder="z. B. nächste Woche"
-                  />
-                </Field>
-                <Field label="Preisschätzung">
-                  <input
-                    value={form.estimatedPrice}
-                    onChange={(event) => updateForm("estimatedPrice", event.target.value)}
-                    className="input"
-                  />
-                </Field>
-              </div>
-
-              <div>
-                <p className="mb-2 text-sm font-black text-[#0F2A3D]">Preisart</p>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {["Stundenpreis", "Festpreis", "Noch offen"].map((priceType) => (
-                    <label
-                      key={priceType}
-                      className="flex items-center gap-2 rounded-md border border-[#dbe7ec] bg-white p-4 font-bold"
-                    >
-                      <input
-                        type="radio"
-                        name="priceType"
-                        checked={form.priceType === priceType}
-                        onChange={() => updateForm("priceType", priceType)}
-                        className="accent-[#18C7B8]"
-                      />
-                      {priceType}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <Field label="Bilder hochladen">
+              <Field label="Bilder oder Videos hochladen">
                 <input
                   type="file"
                   multiple
-                  accept="image/*"
-                  onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
-                  className="block w-full rounded-md border border-dashed border-[#9fc5cf] bg-white px-4 py-5 text-sm font-medium text-[#425466]"
+                  accept="image/*,video/*"
+                  onChange={(event) => updateFiles(event.target.files)}
+                  className="block w-full rounded-md border border-dashed border-[#9fc5cf] bg-white px-4 py-4 text-sm font-medium text-[#425466]"
                 />
+                <span className="text-xs font-medium text-[#64748B]">
+                  Maximal 5 Dateien, Bilder oder Videos.
+                </span>
               </Field>
+
+              {fileError ? (
+                <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{fileError}</p>
+              ) : null}
 
               <label className="flex gap-3 rounded-md border border-[#dbe7ec] bg-white p-4 text-sm font-medium">
                 <input
@@ -846,7 +890,7 @@ export function LandingPage() {
                   className="mt-1 h-4 w-4 shrink-0 accent-[#18C7B8]"
                   required
                 />
-                <span>Ich möchte ein Angebot auf Basis meiner Angaben erhalten.</span>
+                <span>Ich möchte auf Basis meiner Angaben kontaktiert werden.</span>
               </label>
 
               {error ? <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
@@ -861,7 +905,7 @@ export function LandingPage() {
                 disabled={submitState === "loading"}
                 className="rounded-md bg-[#0F2A3D] px-6 py-4 text-base font-black text-white shadow-[0_16px_34px_rgba(15,42,61,0.22)] transition hover:bg-[#14354d]"
               >
-                Anfrage absenden
+                Anfrage senden
               </button>
             </form>
           </div>
@@ -898,28 +942,6 @@ function SectionIntro({
         {title}
       </h2>
       <p className="mt-4 text-lg leading-8 text-[#64748B]">{text}</p>
-    </div>
-  );
-}
-
-function CalculatorBlock({
-  number,
-  title,
-  children,
-}: {
-  number: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-3 flex items-center gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-md bg-[#0F2A3D] text-sm font-black text-white">
-          {number}
-        </span>
-        <p className="font-black text-[#0F2A3D]">{title}</p>
-      </div>
-      {children}
     </div>
   );
 }
