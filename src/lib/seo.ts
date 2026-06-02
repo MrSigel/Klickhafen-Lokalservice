@@ -24,6 +24,12 @@ export const serviceNames = [
   "Entrümpelung",
   "Abtransport",
   "Objektpflege",
+  "Notfallservice",
+  "Schlüsseldienst",
+  "Türöffnung",
+  "WC-Verstopfung",
+  "Abfluss verstopft",
+  "Rohrverstopfung",
 ];
 
 export const faqItems = [
@@ -58,7 +64,7 @@ export const faqItems = [
 ];
 
 export const siteDescription =
-  "Klickhafen Lokalservice übernimmt Gartenpflege, Reinigung, Montage, Bodenverlegung, Entrümpelung und Objektpflege in Castrop-Rauxel, Dortmund, Herne und Bochum.";
+  "Klickhafen Lokalservice übernimmt Gartenpflege, Reinigung, Montage, Bodenverlegung, Entrümpelung, Notfallservice und Objektpflege in Castrop-Rauxel, Dortmund, Herne und Bochum.";
 
 export function absoluteUrl(path = "/") {
   return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;

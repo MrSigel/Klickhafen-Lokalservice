@@ -76,7 +76,10 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError || !serviceRequest) {
-      throw insertError ?? new Error("Anfrage konnte nicht gespeichert werden.");
+      return NextResponse.json(
+        { error: "Die Anfrage konnte nicht gespeichert werden.", code: "database_failed" },
+        { status: 500 },
+      );
     }
 
     if (files.length > 0) {
@@ -92,7 +95,14 @@ export async function POST(request: Request) {
           });
 
         if (uploadError) {
-          throw uploadError;
+          return NextResponse.json(
+            {
+              error:
+                "Der Datei-Upload konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut oder senden Sie uns die Bilder direkt per WhatsApp.",
+              code: "upload_failed",
+            },
+            { status: 502 },
+          );
         }
 
         const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
@@ -107,15 +117,22 @@ export async function POST(request: Request) {
       const { error: imageError } = await supabase.from("request_images").insert(imageRows);
 
       if (imageError) {
-        throw imageError;
+        return NextResponse.json(
+          {
+            error:
+              "Der Datei-Upload konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut oder senden Sie uns die Bilder direkt per WhatsApp.",
+            code: "upload_failed",
+          },
+          { status: 502 },
+        );
       }
     }
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Die Anfrage konnte nicht gesendet werden.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Die Anfrage konnte nicht gesendet werden.", code: "server_failed" },
+      { status: 500 },
+    );
   }
 }

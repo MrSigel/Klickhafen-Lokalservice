@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ContactFallback } from "@/components/contact-fallback";
 
 const services = {
   Gartenarbeiten: [
@@ -42,6 +43,13 @@ const services = {
     "Sprinter benötigt",
     "Entsorgung benötigt",
   ],
+  Notfallservice: [
+    "Türöffnung",
+    "WC-Verstopfung",
+    "Abfluss verstopft",
+    "Rohrverstopfung",
+    "Gartenablauf verstopft",
+  ],
 };
 
 const effort = {
@@ -56,6 +64,13 @@ const distances = {
   "15-25 km": { fee: 30, label: "30 €" },
   "25-35 km": { fee: 45, label: "45 €" },
   "Mehr als 35 km": { fee: null, label: "nach Absprache" },
+};
+
+const emergencyDistances = {
+  "Bis 10 km": { fee: 0, label: "inklusive" },
+  "10-20 km": { fee: 15, label: "+15 €" },
+  "20-30 km": { fee: 30, label: "+30 €" },
+  "Ab 30 km": { fee: null, label: "nach Absprache" },
 };
 
 const statusText = {
@@ -114,6 +129,19 @@ const serviceCards = [
       "Wohnung räumen",
       "Abtransport",
       "Sprinter nach Bedarf",
+    ],
+  },
+  {
+    icon: "emergency",
+    title: "Notfallservice",
+    text: "Schnelle Hilfe bei Türöffnung, WC-, Abfluss- und einfachen Rohrverstopfungen.",
+    items: [
+      "Schlüsseldienst",
+      "Türöffnung",
+      "WC-Verstopfung",
+      "Abfluss verstopft",
+      "Rohrverstopfung",
+      "schnelle Hilfe im Umkreis",
     ],
   },
 ];
@@ -236,7 +264,13 @@ const brandLogos = [
 
 type ServiceKey = keyof typeof services;
 type EffortKey = keyof typeof effort;
-type DistanceKey = keyof typeof distances;
+type DistanceKey = keyof typeof distances | keyof typeof emergencyDistances;
+type FormFallback = {
+  title: string;
+  text: string;
+  whatsappLabel?: string;
+  whatsappText?: string;
+};
 
 type FormState = {
   salutation: string;
@@ -272,6 +306,7 @@ export function LandingPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [submitState, setSubmitState] = useState<keyof typeof statusText>("idle");
   const [error, setError] = useState("");
+  const [formFallback, setFormFallback] = useState<FormFallback | null>(null);
   const [fileError, setFileError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const reduceMotion = useReducedMotion();
@@ -297,8 +332,30 @@ export function LandingPage() {
       };
 
   const estimate = useMemo(() => {
+    if (selectedService === "Notfallservice") {
+      const distance = emergencyDistances[selectedDistance as keyof typeof emergencyDistances];
+      const travelFee = distance?.fee ?? 0;
+      const isDoorOpening = selectedExtras.includes("Türöffnung");
+      const basePrice = isDoorOpening ? 79 : 89;
+      const total = basePrice + travelFee;
+      const travelNote =
+        distance?.fee === null
+          ? "Anfahrt ab 30 km nach Absprache"
+          : selectedDistance === "Bis 10 km"
+            ? "Anfahrt bis 10 km inklusive"
+            : `Anfahrt ${selectedDistance}: ${distance?.label}`;
+
+      return {
+        range: `ca. ${formatEuro(total)}`,
+        fixed: `ab ${formatEuro(total)}`,
+        effortText: "einfacher Notfalleinsatz",
+        travelNote,
+        full: `Unverbindliche Orientierung: ca. ${formatEuro(total)} | ${travelNote} | Der genaue Preis wird vor Beginn bestätigt.`,
+      };
+    }
+
     const selected = effort[selectedEffort];
-    const distance = distances[selectedDistance];
+    const distance = distances[selectedDistance as keyof typeof distances];
     const travelFee = distance.fee ?? 0;
     const min = selected.min * 23.8 + travelFee;
     const max = selected.max * 23.8 + travelFee;
@@ -315,7 +372,7 @@ export function LandingPage() {
       travelNote,
       full: `Unverbindliche Schätzung: ca. ${formatEuro(min)}-${formatEuro(max)} | Festpreis-Vorteil: ab ${formatEuro(fixed)} | ${travelNote}`,
     };
-  }, [selectedEffort, selectedDistance]);
+  }, [selectedEffort, selectedDistance, selectedExtras, selectedService]);
 
   function toggleExtra(extra: string) {
     setSelectedExtras((current) =>
@@ -326,6 +383,7 @@ export function LandingPage() {
   function changeService(service: ServiceKey) {
     setSelectedService(service);
     setSelectedExtras([services[service][0]]);
+    setSelectedDistance(service === "Notfallservice" ? "Bis 10 km" : "Bis 5 km");
   }
 
   function applyEstimate() {
@@ -333,7 +391,9 @@ export function LandingPage() {
       "Preisschätzung aus dem Kostenrechner:",
       `Leistung: ${selectedService}`,
       selectedExtras.length ? `Zusatzarbeiten: ${selectedExtras.join(", ")}` : "",
-      `Aufwand: ${selectedEffort} (${estimate.effortText})`,
+      selectedService === "Notfallservice"
+        ? `Einsatz: ${estimate.effortText}`
+        : `Aufwand: ${selectedEffort} (${estimate.effortText})`,
       `Entfernung ab PLZ 44577: ${selectedDistance}`,
       `Preisschätzung: ${estimate.range}`,
       `Festpreis-Schätzung: ${estimate.fixed}`,
@@ -380,6 +440,7 @@ export function LandingPage() {
   async function submitRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setFormFallback(null);
 
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.accepted) {
       setError("Bitte füllen Sie Vorname, Name und E-Mail aus und bestätigen Sie die Kontaktanfrage.");
@@ -420,11 +481,28 @@ export function LandingPage() {
       method: "POST",
       body: data,
     });
-    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    const result = (await response.json().catch(() => null)) as
+      | { error?: string; code?: string }
+      | null;
 
     if (!response.ok) {
       setSubmitState("idle");
-      setError(result?.error ?? "Die Anfrage konnte nicht gesendet werden.");
+      if (result?.code === "upload_failed") {
+        setFormFallback({
+          title: "Der Datei-Upload konnte nicht abgeschlossen werden.",
+          text:
+            "Bitte versuchen Sie es erneut oder senden Sie uns die Bilder direkt per WhatsApp.",
+          whatsappLabel: "Bilder per WhatsApp senden",
+          whatsappText:
+            "Hallo, ich möchte Bilder zu meiner Anfrage senden. Mein Anliegen:",
+        });
+      } else {
+        setFormFallback({
+          title: "Aktuell gibt es Schwierigkeiten mit unserem Formular.",
+          text:
+            "Unsere Techniker arbeiten bereits daran. Bitte kontaktieren Sie uns direkt telefonisch, per WhatsApp oder per E-Mail.",
+        });
+      }
       return;
     }
 
@@ -434,6 +512,14 @@ export function LandingPage() {
   }
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "4915563535989";
+  const emergencyWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    "Hallo, ich benötige schnelle Hilfe. Mein Anliegen:",
+  )}`;
+  const activeDistances = selectedService === "Notfallservice" ? emergencyDistances : distances;
+  const activeDistanceEntries = Object.entries(activeDistances) as [
+    DistanceKey,
+    { fee: number | null; label: string },
+  ][];
   const canGoNext =
     wizardStep === 1 ||
     wizardStep === 3 ||
@@ -606,6 +692,58 @@ export function LandingPage() {
           </div>
         </motion.section>
 
+        <motion.section className="bg-[#F4F8FA] py-14 sm:py-16" {...sectionMotion}>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-8 rounded-lg border border-[#dbe7ec] bg-white p-6 shadow-[0_20px_55px_rgba(15,42,61,0.08)] lg:grid-cols-[1fr_1.1fr] lg:items-center lg:p-8">
+              <div>
+                <p className="text-sm font-black uppercase tracking-wide text-[#18C7B8]">
+                  Notfallservice
+                </p>
+                <h2 className="mt-3 text-3xl font-black tracking-tight text-[#0F2A3D] sm:text-4xl">
+                  Notfallservice rund um Castrop-Rauxel
+                </h2>
+                <p className="mt-4 leading-8 text-[#64748B]">
+                  Schnelle Hilfe bei zugefallenen Türen, verstopften Toiletten, Abflüssen und
+                  einfachen Rohrverstopfungen. Im Umkreis von 10 km um 44577 Castrop-Rauxel bieten
+                  wir klare Festpreise für einfache Einsätze.
+                </p>
+                <motion.a
+                  href={emergencyWhatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-6 inline-flex rounded-md bg-[#18C7B8] px-5 py-3 text-sm font-black text-[#0F2A3D] shadow-[0_14px_30px_rgba(24,199,184,0.22)] transition hover:bg-[#15b6a8]"
+                  {...buttonMotion}
+                >
+                  Notfall per WhatsApp melden
+                </motion.a>
+              </div>
+              <div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    "Türöffnung ab 79 €",
+                    "Verstopfung beseitigen ab 89 €",
+                    "Anfahrt bis 10 km inklusive",
+                    "Weitere Entfernung nach Absprache",
+                  ].map((item) => (
+                    <motion.p
+                      key={item}
+                      className="rounded-md border border-[#dbe7ec] bg-[#F4F8FA] p-4 font-black text-[#0F2A3D]"
+                      {...cardMotion}
+                    >
+                      <span className="mr-2 text-[#18C7B8]">✓</span>
+                      {item}
+                    </motion.p>
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-6 text-[#64748B]">
+                  Preise gelten für einfache Einsätze. Bei Zusatzaufwand, Material oder besonderem
+                  Aufwand erfolgt eine transparente Absprache vor Beginn.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
         <motion.section id="ablauf" className="py-18 sm:py-20" {...sectionMotion}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionIntro
@@ -709,7 +847,10 @@ export function LandingPage() {
                   <h3 className="mt-1 text-2xl font-black text-[#0F2A3D]">
                     {wizardStep === 1 && "Leistung auswählen"}
                     {wizardStep === 2 && "Zusatzarbeiten auswählen"}
-                    {wizardStep === 3 && "Aufwand auswählen"}
+                    {wizardStep === 3 &&
+                      (selectedService === "Notfallservice"
+                        ? "Einsatz einschätzen"
+                        : "Aufwand auswählen")}
                     {wizardStep === 4 && "Entfernung auswählen"}
                     {wizardStep === 5 && "Ergebnis"}
                   </h3>
@@ -770,7 +911,7 @@ export function LandingPage() {
                 </div>
               ) : null}
 
-              {wizardStep === 3 ? (
+              {wizardStep === 3 && selectedService !== "Notfallservice" ? (
                 <div className="grid gap-2 sm:grid-cols-3">
                   {(Object.keys(effort) as EffortKey[]).map((level) => (
                     <motion.button
@@ -793,13 +934,23 @@ export function LandingPage() {
                 </div>
               ) : null}
 
+              {wizardStep === 3 && selectedService === "Notfallservice" ? (
+                <div className="rounded-lg border border-[#18C7B8] bg-[#e7fbf8] p-5">
+                  <p className="text-lg font-black text-[#0F2A3D]">Einfacher Notfalleinsatz</p>
+                  <p className="mt-2 leading-7 text-[#425466]">
+                    Die Orientierung gilt für einfache Türöffnungen, WC-, Abfluss- und
+                    Rohrverstopfungen. Zusatzaufwand wird vor Beginn transparent abgesprochen.
+                  </p>
+                </div>
+              ) : null}
+
               {wizardStep === 4 ? (
                 <div>
                   <p className="mb-3 rounded-md bg-[#F4F8FA] px-4 py-3 text-sm font-bold text-[#0F2A3D]">
                     Entfernung jeweils ab PLZ 44577 Castrop-Rauxel auswählen.
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {(Object.keys(distances) as DistanceKey[]).map((distance) => (
+                    {activeDistanceEntries.map(([distance, distanceInfo]) => (
                       <motion.button
                         key={distance}
                         type="button"
@@ -813,7 +964,7 @@ export function LandingPage() {
                       >
                         <span className="block font-black text-[#0F2A3D]">{distance}</span>
                         <span className="text-sm font-medium text-[#64748B]">
-                          ab PLZ 44577 · Anfahrt: {distances[distance].label}
+                          ab PLZ 44577 · Anfahrt: {distanceInfo.label}
                         </span>
                       </motion.button>
                     ))}
@@ -842,7 +993,9 @@ export function LandingPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-sm font-medium text-[#64748B]">
-                    Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt.
+                    {selectedService === "Notfallservice"
+                      ? "Der genaue Preis wird vor Beginn bestätigt."
+                      : "Der genaue Preis wird nach Prüfung Ihrer Angaben bestätigt."}
                   </p>
                   <motion.button
                     type="button"
@@ -1041,7 +1194,7 @@ export function LandingPage() {
                   value={form.description}
                   onChange={(event) => updateForm("description", event.target.value)}
                   className="input min-h-32"
-                  placeholder="Beschreiben Sie kurz Ihr Anliegen. Sie können zusätzlich Bilder oder Videos hochladen."
+                  placeholder="Beschreiben Sie kurz Ihr Anliegen, z.B. Tür zugefallen, WC verstopft oder Gartenarbeit. Sie können Bilder oder Videos hochladen."
                 />
               </Field>
 
@@ -1075,6 +1228,14 @@ export function LandingPage() {
               </label>
 
               {error ? <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+              {formFallback ? (
+                <ContactFallback
+                  title={formFallback.title}
+                  text={formFallback.text}
+                  whatsappLabel={formFallback.whatsappLabel}
+                  whatsappText={formFallback.whatsappText}
+                />
+              ) : null}
               {submitState !== "idle" ? (
                 <p className="rounded-md bg-white p-3 text-sm font-bold text-[#0F2A3D]">
                   {statusText[submitState]}
@@ -1316,6 +1477,17 @@ function ServiceIcon({ name }: { name: string }) {
         <path d="m2.5 21.5 8.5-8.5" />
         <path d="m8 6 10 10" />
         <path d="m14 20 2-2 2 2 2-2-2-2" />
+      </svg>
+    );
+  }
+
+  if (name === "emergency") {
+    return (
+      <svg {...common}>
+        <path d="M15 7.5a3.5 3.5 0 1 0-3.4 4.4L5 18.5V21h2.5l1-1H11v-2.5l4.6-4.6A3.5 3.5 0 0 0 15 7.5Z" />
+        <path d="M15.5 7.5h.01" />
+        <path d="M18 14v5" />
+        <path d="M15.5 16.5h5" />
       </svg>
     );
   }

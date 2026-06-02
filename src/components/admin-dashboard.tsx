@@ -58,7 +58,7 @@ export function AdminDashboard() {
         | null;
 
       if (!response.ok) {
-        setError(result?.error ?? "Anfragen konnten nicht geladen werden.");
+        setError("Anfragen konnten nicht geladen werden.");
       } else {
         setRequests(result?.requests ?? []);
       }
@@ -99,9 +99,18 @@ export function AdminDashboard() {
       </div>
 
       {loading ? <p className="rounded-md bg-white p-4">Anfragen werden geladen...</p> : null}
-      {error ? <p className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <div className="mb-5 rounded-lg border border-[#dbe7ec] bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-extrabold text-[#0F2A3D]">
+            Anfragen konnten nicht geladen werden.
+          </h2>
+          <p className="mt-2 text-[#64748B]">
+            Bitte prüfen Sie die Verbindung oder versuchen Sie es später erneut.
+          </p>
+        </div>
+      ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+      {!error ? <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="grid max-h-[72vh] gap-3 overflow-auto">
           {requests.map((request) => (
             <button
@@ -210,7 +219,7 @@ export function AdminDashboard() {
             </div>
           </article>
         ) : null}
-      </div>
+      </div> : null}
     </section>
   );
 }
