@@ -8,24 +8,24 @@ export const metadata: Metadata = {
 
 const details = {
   company: "Klickhafen Lokalservice",
-  owner: "[Inhaber ergänzen]",
-  address: "[Adresse ergänzen]",
+  owner: "Enrico Gross",
+  address: "Gertherstraße 76, 44577 Castrop-Rauxel",
   email: "kontakt@klickhafen.de",
   phone: "+49 155 63535989",
-  vatId: "[USt-ID ergänzen, falls vorhanden]",
+  vatId: "DE278597389",
 };
 
 export default function ImpressumPage() {
   return (
     <LegalPage
       title="Impressum"
-      intro="Diese Seite ist eine Vorlage und sollte vor Veröffentlichung mit den vollständigen Anbieterangaben geprüft und ergänzt werden."
+      intro="Anbieterkennzeichnung nach § 5 Digitale-Dienste-Gesetz (DDG)."
     >
       <section className="grid gap-3">
         <h2 className="text-xl font-black text-[#0F2A3D]">Anbieter</h2>
         <div className="rounded-md border border-[#dbe7ec] bg-[#F4F8FA] p-4 leading-7 text-[#425466]">
           <p>{details.company}</p>
-          <p>{details.owner}</p>
+          <p>Inhaber: {details.owner}</p>
           <p>{details.address}</p>
         </div>
       </section>
@@ -39,8 +39,12 @@ export default function ImpressumPage() {
       </section>
 
       <section className="grid gap-3">
-        <h2 className="text-xl font-black text-[#0F2A3D]">Umsatzsteuer-ID</h2>
-        <p className="leading-7 text-[#425466]">{details.vatId}</p>
+        <h2 className="text-xl font-black text-[#0F2A3D]">
+          Umsatzsteuer-Identifikationsnummer
+        </h2>
+        <p className="leading-7 text-[#425466]">
+          Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: {details.vatId}
+        </p>
       </section>
 
       <section className="grid gap-3">
@@ -48,16 +52,7 @@ export default function ImpressumPage() {
           Verantwortlich für Inhalte
         </h2>
         <p className="leading-7 text-[#425466]">
-          Verantwortlich für die Inhalte dieser Website ist {details.owner}, Anschrift:
-          {` ${details.address}`}.
-        </p>
-      </section>
-
-      <section className="grid gap-3">
-        <h2 className="text-xl font-black text-[#0F2A3D]">EU-Streitbeilegung</h2>
-        <p className="leading-7 text-[#425466]">
-          Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit.
-          Der Link kann bei Bedarf ergänzt werden: https://ec.europa.eu/consumers/odr/
+          Verantwortlich für die Inhalte dieser Website ist {details.owner}, {details.address}.
         </p>
       </section>
 
@@ -66,8 +61,8 @@ export default function ImpressumPage() {
           Verbraucherstreitbeilegung
         </h2>
         <p className="leading-7 text-[#425466]">
-          Angaben zur Teilnahme an einem Streitbeilegungsverfahren vor einer
-          Verbraucherschlichtungsstelle sollten vor Veröffentlichung individuell ergänzt werden.
+          Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer
+          Verbraucherschlichtungsstelle teilzunehmen.
         </p>
       </section>
     </LegalPage>
