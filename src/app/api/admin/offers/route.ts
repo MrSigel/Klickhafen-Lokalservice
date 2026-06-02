@@ -3,6 +3,7 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   calculateOfferPrice,
   clampDiscount,
+  defaultCreditCheckConsentText,
   defaultOfferNotes,
   generateOfferNumber,
   positiveNumber,
@@ -11,6 +12,10 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function bool(value: unknown) {
+  return value === true || value === "true";
 }
 
 export async function GET() {
@@ -50,6 +55,11 @@ export async function POST(request: Request) {
   const offerDate = text(body.offerDate);
   const specialPrice = positiveNumber(body.specialPrice);
   const netPrice = positiveNumber(body.netPrice);
+  const creditCheckRequired = bool(body.creditCheckRequired);
+  const submittedCreditCheckConsentText = text(body.creditCheckConsentText);
+  const creditCheckConsentText =
+    submittedCreditCheckConsentText || (creditCheckRequired ? defaultCreditCheckConsentText : "");
+  const creditCheckThreshold = positiveNumber(body.creditCheckThreshold) || 500;
 
   if (!firstName || !lastName || (!email && !phone) || !serviceDescription || !validUntil) {
     return NextResponse.json({ error: "Bitte füllen Sie alle Pflichtfelder aus." }, { status: 400 });
@@ -61,6 +71,13 @@ export async function POST(request: Request) {
 
   if (netPrice <= 0 && specialPrice <= 0) {
     return NextResponse.json({ error: "Bitte geben Sie einen Preis oder Sonderpreis an." }, { status: 400 });
+  }
+
+  if (creditCheckRequired && !submittedCreditCheckConsentText) {
+    return NextResponse.json(
+      { error: "Bitte Einwilligungstext zur Bonitätsprüfung eintragen." },
+      { status: 400 },
+    );
   }
 
   const price = calculateOfferPrice({
@@ -102,6 +119,9 @@ export async function POST(request: Request) {
       gross_total: price.grossTotal,
       payment_type: text(body.paymentType) || null,
       legal_notes: text(body.legalNotes) || defaultOfferNotes,
+      credit_check_required: creditCheckRequired,
+      credit_check_consent_text: creditCheckRequired ? creditCheckConsentText : null,
+      credit_check_threshold: creditCheckThreshold,
       status: "draft",
       created_at: offerDate ? new Date(offerDate).toISOString() : undefined,
     })

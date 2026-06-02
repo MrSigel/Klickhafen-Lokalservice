@@ -129,6 +129,9 @@ export type Database = {
           gross_total: number | null;
           payment_type: string | null;
           legal_notes: string | null;
+          credit_check_required: boolean | null;
+          credit_check_consent_text: string | null;
+          credit_check_threshold: number | null;
           status: string | null;
           created_at: string | null;
         };
@@ -158,6 +161,9 @@ export type Database = {
           gross_total?: number | null;
           payment_type?: string | null;
           legal_notes?: string | null;
+          credit_check_required?: boolean | null;
+          credit_check_consent_text?: string | null;
+          credit_check_threshold?: number | null;
           status?: string | null;
           created_at?: string | null;
         };
@@ -186,6 +192,9 @@ export type Database = {
           gross_total?: number | null;
           payment_type?: string | null;
           legal_notes?: string | null;
+          credit_check_required?: boolean | null;
+          credit_check_consent_text?: string | null;
+          credit_check_threshold?: number | null;
           status?: string | null;
         };
         Relationships: [];

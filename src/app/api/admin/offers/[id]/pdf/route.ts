@@ -30,6 +30,9 @@ type Offer = {
   gross_total: number | null;
   payment_type: string | null;
   legal_notes: string | null;
+  credit_check_required: boolean | null;
+  credit_check_consent_text: string | null;
+  credit_check_threshold: number | null;
   status: string | null;
   created_at: string | null;
 };
@@ -214,6 +217,101 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     font: regular,
     color: muted,
   });
+
+  if (offer.credit_check_required && offer.credit_check_consent_text) {
+    const consentPage = pdf.addPage([595.28, 841.89]);
+    let consentY = 790;
+    consentPage.drawText("Einwilligung zur Bonitätsprüfung", {
+      x: margin,
+      y: consentY,
+      size: 22,
+      font: bold,
+      color: navy,
+    });
+    consentY -= 26;
+    consentPage.drawText(`Angebot: ${text(offer.offer_number)}`, {
+      x: margin,
+      y: consentY,
+      size: 10,
+      font: regular,
+      color: muted,
+    });
+    consentY -= 18;
+    consentPage.drawText(`Kunde: ${customerName || "-"}`, {
+      x: margin,
+      y: consentY,
+      size: 10,
+      font: regular,
+      color: muted,
+    });
+    consentY -= 34;
+    consentPage.drawRectangle({
+      x: margin,
+      y: consentY - 260,
+      width: width - margin * 2,
+      height: 280,
+      color: light,
+    });
+    consentPage.drawText("Einwilligungstext", {
+      x: margin + 14,
+      y: consentY,
+      size: 12,
+      font: bold,
+      color: navy,
+    });
+    consentY -= 22;
+    for (const paragraph of offer.credit_check_consent_text.split(/\n+/).filter(Boolean)) {
+      for (const line of wrapText(paragraph, 98)) {
+        consentPage.drawText(line, {
+          x: margin + 14,
+          y: consentY,
+          size: 9.5,
+          font: regular,
+          color: muted,
+        });
+        consentY -= 14;
+      }
+      consentY -= 6;
+    }
+
+    consentY = 370;
+    consentPage.drawText("Einwilligung Kunde zur Bonitätsprüfung", {
+      x: margin,
+      y: consentY,
+      size: 13,
+      font: bold,
+      color: navy,
+    });
+    consentY -= 44;
+    consentPage.drawLine({
+      start: { x: margin, y: consentY },
+      end: { x: 245, y: consentY },
+      thickness: 0.8,
+      color: muted,
+    });
+    consentPage.drawLine({
+      start: { x: 305, y: consentY },
+      end: { x: 545, y: consentY },
+      thickness: 0.8,
+      color: muted,
+    });
+    consentPage.drawText("Ort, Datum", { x: margin, y: consentY - 14, size: 8, font: regular, color: muted });
+    consentPage.drawText("Name des Kunden, Unterschrift", {
+      x: 305,
+      y: consentY - 14,
+      size: 8,
+      font: regular,
+      color: muted,
+    });
+    consentPage.drawLine({ start: { x: margin, y: 34 }, end: { x: width - margin, y: 34 }, thickness: 0.5, color: muted });
+    consentPage.drawText("© Klickhafen.de Webdesign und Entwicklung", {
+      x: margin,
+      y: 20,
+      size: 7.5,
+      font: regular,
+      color: muted,
+    });
+  }
 
   if (offer.status === "draft") {
     await supabase.from("offers").update({ status: "downloaded" }).eq("id", offer.id);

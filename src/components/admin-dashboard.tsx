@@ -6,6 +6,7 @@ import {
   addDaysInputValue,
   calculateOfferPrice,
   dateInputValue,
+  defaultCreditCheckConsentText,
   defaultOfferNotes,
   formatMoney,
   generateOfferNumber,
@@ -65,6 +66,9 @@ type Offer = {
   gross_total: number | null;
   payment_type: string | null;
   legal_notes: string | null;
+  credit_check_required: boolean | null;
+  credit_check_consent_text: string | null;
+  credit_check_threshold: number | null;
   status: string | null;
   created_at: string | null;
 };
@@ -139,6 +143,9 @@ type OfferFormState = {
   otherCosts: string;
   paymentType: string;
   legalNotes: string;
+  creditCheckRequired: boolean;
+  creditCheckConsentText: string;
+  creditCheckThreshold: string;
 };
 
 type CalculatorSummary = {
@@ -832,6 +839,16 @@ function CustomersView({
                         {dateTime(offer.created_at ?? new Date().toISOString())} ·{" "}
                         {formatMoney(offer.gross_total)}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {offer.credit_check_required ? (
+                          <Badge className="bg-[#e7fbf8] text-[#0F2A3D] ring-[#18C7B8]/40">
+                            Bonitätsprüfung
+                          </Badge>
+                        ) : null}
+                        <Badge className={statusClass(offer.status ?? "draft")}>
+                          {offerStatusLabels[offer.status ?? "draft"] ?? offer.status}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <a
@@ -855,6 +872,26 @@ function CustomersView({
                       </select>
                     </div>
                   </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <Info
+                      label="Bonitätsprüfung aktiviert"
+                      value={offer.credit_check_required ? "Ja" : "Nein"}
+                    />
+                    <Info
+                      label="Schwelle"
+                      value={formatMoney(offer.credit_check_threshold ?? 500)}
+                    />
+                  </div>
+                  {offer.credit_check_required ? (
+                    <div className="mt-3 rounded-md bg-white p-3 ring-1 ring-[#dbe7ec]">
+                      <p className="text-xs font-bold uppercase text-[#64748B]">
+                        Einwilligungstext
+                      </p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-6 text-[#0F2A3D]">
+                        {offer.credit_check_consent_text || "-"}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               ))}
               {customerOffers.length === 0 ? (
@@ -934,8 +971,11 @@ function OfferWizard({
     travelCosts: "",
     disposalCosts: "",
     otherCosts: "",
-    paymentType: "Rechnung",
+    paymentType: "Zahlung nach Leistung",
     legalNotes: defaultOfferNotes,
+    creditCheckRequired: false,
+    creditCheckConsentText: defaultCreditCheckConsentText,
+    creditCheckThreshold: "500",
   }));
 
   const price = calculateOfferPrice({
@@ -979,6 +1019,10 @@ function OfferWizard({
       return "Rabatt darf maximal 100 % betragen.";
     }
 
+    if (form.creditCheckRequired && !form.creditCheckConsentText.trim()) {
+      return "Bitte Einwilligungstext zur Bonitätsprüfung eintragen.";
+    }
+
     return "";
   }
 
@@ -1019,6 +1063,9 @@ function OfferWizard({
         otherCosts: form.otherCosts,
         paymentType: form.paymentType,
         legalNotes: form.legalNotes,
+        creditCheckRequired: form.creditCheckRequired,
+        creditCheckConsentText: form.creditCheckConsentText,
+        creditCheckThreshold: form.creditCheckThreshold,
       }),
     });
     const result = (await response.json().catch(() => null)) as
@@ -1151,7 +1198,15 @@ function OfferWizard({
               </WizardField>
               <WizardField label="Zahlungsart">
                 <select value={form.paymentType} onChange={(event) => update("paymentType", event.target.value)} className="input">
-                  {["Bar", "Überweisung", "Rechnung", "Vorkasse bei Material"].map((item) => (
+                  {[
+                    "Vorkasse",
+                    "Vorkasse bei Material",
+                    "Teilzahlung nach Absprache",
+                    "Zahlung nach Leistung",
+                    "Barzahlung",
+                    "Überweisung",
+                    "Rechnung",
+                  ].map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
@@ -1160,9 +1215,44 @@ function OfferWizard({
           ) : null}
 
           {step === 4 ? (
-            <WizardField label="Rechtliche Hinweise / Bedingungen">
-              <textarea value={form.legalNotes} onChange={(event) => update("legalNotes", event.target.value)} className="input min-h-72" />
-            </WizardField>
+            <div className="grid gap-4">
+              <WizardField label="Rechtliche Hinweise / Bedingungen">
+                <textarea value={form.legalNotes} onChange={(event) => update("legalNotes", event.target.value)} className="input min-h-56" />
+              </WizardField>
+              <div className="rounded-lg border border-[#dbe7ec] bg-[#F4F8FA] p-4">
+                {price.grossTotal > positiveNumber(form.creditCheckThreshold) ? (
+                  <p className="mb-3 rounded-md bg-white p-3 text-sm font-bold leading-6 text-[#0F2A3D]">
+                    Bei Angeboten über {formatMoney(positiveNumber(form.creditCheckThreshold))} kann vor Auftragsannahme eine Bonitätsprüfung erforderlich sein, sofern der Kunde ausdrücklich einwilligt.
+                  </p>
+                ) : null}
+                <label className="flex gap-3 text-sm font-bold text-[#0F2A3D]">
+                  <input
+                    type="checkbox"
+                    checked={form.creditCheckRequired}
+                    onChange={(event) => update("creditCheckRequired", event.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-[#18C7B8]"
+                  />
+                  <span>Bonitätsprüfung/SCHUFA-Abfrage bei diesem Angebot erforderlich</span>
+                </label>
+                <p className="mt-3 text-xs font-semibold leading-5 text-[#64748B]">
+                  Hinweis: Eine Bonitätsprüfung darf nur mit geeigneter Rechtsgrundlage erfolgen, z. B. mit ausdrücklicher Einwilligung oder bei berechtigtem Interesse im Rahmen eines Zahlungsausfallrisikos. Bitte vor Nutzung rechtlich prüfen.
+                </p>
+                {form.creditCheckRequired ? (
+                  <div className="mt-4 grid gap-3">
+                    <p className="rounded-md bg-white p-3 text-sm font-bold text-[#0F2A3D]">
+                      Alternativ kann Vorkasse vereinbart werden.
+                    </p>
+                    <WizardField label="Einwilligungstext Bonitätsprüfung" required>
+                      <textarea
+                        value={form.creditCheckConsentText}
+                        onChange={(event) => update("creditCheckConsentText", event.target.value)}
+                        className="input min-h-40"
+                      />
+                    </WizardField>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           ) : null}
 
           {step === 5 ? (
@@ -1275,6 +1365,16 @@ function OfferPreview({
         </p>
         <p className="mt-2 text-3xl font-black text-[#0F2A3D]">{formatMoney(price.grossTotal)}</p>
       </div>
+      {form.creditCheckRequired ? (
+        <div className="mt-4 rounded-md border border-[#dbe7ec] bg-[#F4F8FA] p-4">
+          <p className="text-sm font-black text-[#0F2A3D]">
+            Einwilligung zur Bonitätsprüfung
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-6 text-[#64748B]">
+            {form.creditCheckConsentText || "-"}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

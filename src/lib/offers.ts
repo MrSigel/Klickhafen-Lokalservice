@@ -8,6 +8,9 @@ export const defaultOfferNotes = [
   "Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer, sofern nicht anders angegeben.",
 ].join("\n\n");
 
+export const defaultCreditCheckConsentText =
+  "Ich willige ein, dass Klickhafen Lokalservice vor Auftragsbeginn eine Bonitätsprüfung über eine geeignete Auskunftei, z. B. SCHUFA, durchführen darf. Die Prüfung dient ausschließlich der Einschätzung des Zahlungsausfallrisikos für dieses Angebot. Die Einwilligung erfolgt freiwillig und kann jederzeit mit Wirkung für die Zukunft widerrufen werden. Ohne Einwilligung kann Klickhafen Lokalservice alternativ Vorkasse oder eine andere Zahlungsart verlangen.";
+
 export type OfferPriceInput = {
   netPrice: number;
   discountPercent: number;
