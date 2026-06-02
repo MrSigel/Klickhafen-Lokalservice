@@ -1047,8 +1047,16 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-white/12 pt-5 text-sm text-[#d5e6ec]">
-            © Klickhafen.de Webdesign und Entwicklung
+          <div className="mt-8 border-t border-white/12 pt-5 text-center">
+            <motion.a
+              href="https://klickhafen.de"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-[#d5e6ec] transition hover:bg-white/10 hover:text-[#18C7B8]"
+              {...(reduceMotion ? {} : { whileHover: { y: -2, scale: 1.02 }, whileTap: { scale: 0.98 } })}
+            >
+              © klickhafen.de Webdesign und Entwicklung
+            </motion.a>
           </div>
         </div>
       </motion.footer>
