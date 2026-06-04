@@ -3,6 +3,14 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const statuses = ["new", "contacted", "offered", "accepted", "completed", "rejected"];
+const bucketName = "request-images";
+
+function storagePathFromUrl(fileUrl: string) {
+  const marker = `/storage/v1/object/public/${bucketName}/`;
+  const [, path] = fileUrl.split(marker);
+
+  return path ? decodeURIComponent(path) : "";
+}
 
 export async function PATCH(
   request: Request,
@@ -37,7 +45,20 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   }
 
   const { id } = await context.params;
-  const { data, error } = await getSupabaseAdmin()
+  const supabase = getSupabaseAdmin();
+  const { data: images } = await supabase
+    .from("request_images")
+    .select("file_url")
+    .eq("request_id", id);
+  const filePaths = (images ?? [])
+    .map((image) => storagePathFromUrl(image.file_url))
+    .filter(Boolean);
+
+  if (filePaths.length > 0) {
+    await supabase.storage.from(bucketName).remove(filePaths);
+  }
+
+  const { data, error } = await supabase
     .from("service_requests")
     .delete()
     .eq("id", id)
