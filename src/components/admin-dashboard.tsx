@@ -323,8 +323,8 @@ export function AdminDashboard({ view }: { view: AdminView }) {
 
   const customers = useMemo(() => buildCustomers(requests), [requests]);
   const selectedRequest = useMemo(
-    () => requests.find((request) => request.id === selectedId) ?? filteredRequests[0],
-    [filteredRequests, requests, selectedId],
+    () => filteredRequests.find((request) => request.id === selectedId),
+    [filteredRequests, selectedId],
   );
   const selectedCustomer = useMemo(
     () => customers.find((customer) => customer.key === selectedCustomerKey) ?? customers[0],
@@ -361,6 +361,20 @@ export function AdminDashboard({ view }: { view: AdminView }) {
     setRequests((current) =>
       current.map((request) => (request.id === id ? { ...request, status } : request)),
     );
+  }
+
+  async function deleteRequest(id: string) {
+    const response = await fetch(`/api/admin/requests/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      setError("Anfrage konnte nicht gelöscht werden.");
+      return;
+    }
+
+    setRequests((current) => current.filter((request) => request.id !== id));
+    setSelectedId((current) => (current === id ? "" : current));
   }
 
   async function updateOfferStatus(id: string, status: string) {
@@ -410,8 +424,9 @@ export function AdminDashboard({ view }: { view: AdminView }) {
           statusFilter={statusFilter}
           onSourceFilter={setSourceFilter}
           onStatusFilter={setStatusFilter}
-          onSelect={setSelectedId}
+          onSelect={(id) => setSelectedId((current) => (current === id ? "" : id))}
           onStatusChange={updateStatus}
+          onDelete={deleteRequest}
         />
       ) : null}
       {!loading && !error && view === "customers" ? (
@@ -559,6 +574,7 @@ function RequestsView({
   onStatusFilter,
   onSelect,
   onStatusChange,
+  onDelete,
 }: {
   requests: ServiceRequest[];
   selected: ServiceRequest | undefined;
@@ -568,6 +584,7 @@ function RequestsView({
   onStatusFilter: (value: string) => void;
   onSelect: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <div className="grid gap-5">
@@ -632,9 +649,13 @@ function RequestsView({
                       <button
                         type="button"
                         onClick={() => onSelect(request.id)}
-                        className="rounded-md bg-[#0F2A3D] px-3 py-2 text-xs font-black text-white"
+                        className={`rounded-md px-3 py-2 text-xs font-black ${
+                          selected?.id === request.id
+                            ? "bg-[#18C7B8] text-[#0F2A3D]"
+                            : "bg-[#0F2A3D] text-white"
+                        }`}
                       >
-                        Details
+                        {selected?.id === request.id ? "Details schließen" : "Details"}
                       </button>
                     </td>
                   </tr>
@@ -651,7 +672,7 @@ function RequestsView({
       </div>
 
       {selected ? (
-        <RequestDetail request={selected} onStatusChange={onStatusChange} />
+        <RequestDetail request={selected} onStatusChange={onStatusChange} onDelete={onDelete} />
       ) : null}
     </div>
   );
@@ -660,11 +681,23 @@ function RequestsView({
 function RequestDetail({
   request,
   onStatusChange,
+  onDelete,
 }: {
   request: ServiceRequest;
   onStatusChange: (id: string, status: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const summary = calculatorSummary(request);
+
+  function confirmDelete() {
+    const confirmed = window.confirm(
+      "Diese Anfrage wirklich löschen? Die zugehörigen Daten werden aus der Anfragenliste entfernt.",
+    );
+
+    if (confirmed) {
+      onDelete(request.id);
+    }
+  }
 
   return (
     <article className="rounded-xl border border-[#dbe7ec] bg-white p-5 shadow-sm">
@@ -676,17 +709,26 @@ function RequestDetail({
             <Badge className={statusClass(request.status)}>{statusLabel(request.status)}</Badge>
           </div>
         </div>
-        <select
-          value={request.status}
-          onChange={(event) => onStatusChange(request.id, event.target.value)}
-          className="rounded-md border border-[#dbe7ec] bg-white px-4 py-3 font-bold"
-        >
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {statusLabel(status)}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={request.status}
+            onChange={(event) => onStatusChange(request.id, event.target.value)}
+            className="rounded-md border border-[#dbe7ec] bg-white px-4 py-3 font-bold"
+          >
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {statusLabel(status)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={confirmDelete}
+            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 font-black text-red-700 transition hover:bg-red-100"
+          >
+            Anfrage löschen
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -30,3 +30,23 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Nicht autorisiert." }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  const { data, error } = await getSupabaseAdmin()
+    .from("service_requests")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return NextResponse.json({ error: "Anfrage konnte nicht gelöscht werden." }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
